@@ -1,4 +1,5 @@
 import { OrderBoard } from "@/components/admin/order-board";
+import { RefreshOrders } from "@/components/admin/refresh-orders";
 import { requireAdmin } from "@/lib/auth/session";
 import { getOrderBoard } from "@/server/queries/admin";
 
@@ -11,6 +12,7 @@ export default async function OrdersPage() {
 
   return (
     <div>
+      <RefreshOrders />
       <header className="mb-6">
         <h1 className="font-display text-2xl font-bold text-ink">Orders</h1>
         <p className="mt-1 text-ink-soft">

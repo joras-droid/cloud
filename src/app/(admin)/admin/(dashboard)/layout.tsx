@@ -2,8 +2,10 @@ import { redirect } from "next/navigation";
 import Link from "next/link";
 import { getSession } from "@/lib/auth/session";
 import { getAdminBadges } from "@/server/queries/admin";
+import { getAdminSettingsRow } from "@/server/queries/admin-orders";
 import { logout } from "@/server/actions/auth";
 import { AdminNav } from "@/components/admin/admin-nav";
+import { KitchenToggle } from "@/components/admin/kitchen-toggle";
 
 export default async function DashboardLayout({
   children,
@@ -13,7 +15,10 @@ export default async function DashboardLayout({
   const session = await getSession();
   if (!session) redirect("/admin/login");
 
-  const badges = await getAdminBadges();
+  const [badges, settings] = await Promise.all([
+    getAdminBadges(),
+    getAdminSettingsRow(),
+  ]);
 
   return (
     <div className="flex min-h-dvh flex-col lg:flex-row">
@@ -50,7 +55,10 @@ export default async function DashboardLayout({
         </form>
       </aside>
 
-      <main className="min-w-0 flex-1 p-5 lg:p-8">{children}</main>
+      <main className="min-w-0 flex-1 p-5 lg:p-8">
+        {settings ? <KitchenToggle open={settings.isAcceptingOrders} /> : null}
+        {children}
+      </main>
     </div>
   );
 }

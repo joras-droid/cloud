@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import { getTranslations, setRequestLocale } from "next-intl/server";
 import { CheckoutForm } from "@/components/checkout/checkout-form";
 import { getCheckoutCities } from "@/server/queries/checkout";
-import { getStoreSettings, isKitchenOpen } from "@/server/queries/settings";
+import { getStoreSettings } from "@/server/queries/settings";
 import type { Locale } from "@/i18n/routing";
 
 export const dynamic = "force-dynamic";
@@ -37,7 +37,7 @@ export default async function CheckoutPage({
       minOrder={settings.minOrder}
       codEnabled={settings.codEnabled}
       codMax={settings.codMax}
-      closed={!settings.isAcceptingOrders || !isKitchenOpen(settings.openHours)}
+      closed={!settings.isAcceptingOrders}
     />
   );
 }

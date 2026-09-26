@@ -231,6 +231,26 @@ export async function saveMedia(form: FormData) {
   });
 }
 
+export async function setKitchenOpen(form: FormData) {
+  const session = await requireAdmin("staff");
+  const [existing] = await db.select().from(s.storeSettings).limit(1);
+  if (!existing) throw new Error("Settings row missing — re-run the seed");
+
+  const open = flag(form, "open");
+  await db
+    .update(s.storeSettings)
+    .set({ isAcceptingOrders: open, updatedAt: new Date() })
+    .where(eq(s.storeSettings.id, existing.id));
+
+  await writeAudit({
+    actorId: session.userId,
+    entity: "settings",
+    entityId: existing.id,
+    action: open ? "kitchen_opened" : "kitchen_closed",
+  });
+  await publishSettings();
+}
+
 export async function saveSettings(form: FormData) {
   const session = await requireAdmin("owner");
   const [existing] = await db.select().from(s.storeSettings).limit(1);

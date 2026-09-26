@@ -44,8 +44,12 @@ export default async function SettingsPage() {
               defaultChecked={settings.isAcceptingOrders}
               className="size-4 accent-brand-600"
             />
-            Accepting orders
+            Kitchen open
           </label>
+          <p className="text-sm text-ink-soft">
+            This is the same switch as the bar at the top of admin. Open means
+            customers can place orders right now. Closed pauses new orders.
+          </p>
           <div className="grid gap-3 sm:grid-cols-2">
             <div>
               <Label htmlFor="minOrder">Minimum order (Rs)</Label>
@@ -208,8 +212,8 @@ function HoursEditor({ hours }: { hours: OpenHour[] }) {
   return (
     <div className="grid gap-2">
       <p className="text-sm text-ink-soft">
-        Hours are stored as the seeded week. A richer editor can land later —
-        change them here as JSON if you need a one-off.
+        Listed hours are a note for the kitchen. They do not block orders.
+        Use the kitchen open/close switch for that.
       </p>
       <textarea
         name="openHours"

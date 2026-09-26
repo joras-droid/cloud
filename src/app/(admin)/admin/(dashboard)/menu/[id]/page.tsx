@@ -1,3 +1,5 @@
+import { notFound } from "next/navigation";
+import { requireAdmin } from "@/lib/auth/session";
 import { AdminBackLink } from "@/components/admin/admin-back-link";
 import { ItemEditor } from "@/components/admin/item-editor";
 import { getAdminCategories, getAdminItem } from "@/server/queries/admin-menu";

@@ -126,6 +126,19 @@ const CATALOG: {
         image: "/vegbiryani.png",
         imageBytes: 2773445,
       },
+      {
+        slug: "chole-bhature",
+        nameEn: "Chole Bhature",
+        nameNe: "छोले भटुरे",
+        descEn: "",
+        descNe: "",
+        price: 22000,
+        isVeg: true,
+        spice: 0,
+        prep: 25,
+        image: "/chole_bhature.png",
+        imageBytes: 2787529,
+      },
     ],
   },
 ];
@@ -329,6 +342,7 @@ async function seed() {
     minOrder: 30000,
     codEnabled: true,
     codMax: 300000,
+    prepayEnabled: true,
     qrImages: [
       {
         method: "fonepay",

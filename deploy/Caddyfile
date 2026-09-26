@@ -1,0 +1,27 @@
+{$SITE_DOMAIN} {
+	encode zstd gzip
+
+	# Cloudflare sits in front and is the real edge cache. Caddy only needs to
+	# terminate TLS, serve immutable assets aggressively, and proxy the rest.
+	@immutable path /_next/static/* /fonts/*
+	header @immutable Cache-Control "public, max-age=31536000, immutable"
+
+	@admin path /admin /admin/*
+	header @admin {
+		Cache-Control "no-store"
+		X-Robots-Tag "noindex, nofollow"
+	}
+
+	header {
+		X-Content-Type-Options "nosniff"
+		Referrer-Policy "strict-origin-when-cross-origin"
+		Strict-Transport-Security "max-age=31536000; includeSubDomains"
+		X-Frame-Options "SAMEORIGIN"
+		-Server
+	}
+
+	reverse_proxy web:3000 {
+		health_uri /api/health
+		health_interval 15s
+	}
+}

@@ -7,7 +7,9 @@ export function publishMenu() {
 }
 
 export function publishSettings() {
-  revalidateTag("settings", "max");
+  // Expire immediately so checkout stops offering a payment method the
+  // kitchen just turned off, instead of serving the cached settings once more.
+  updateTag("settings");
   revalidateTag("zones", "max");
   revalidatePath("/admin/settings");
 }

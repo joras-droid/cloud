@@ -69,7 +69,6 @@ export function MediaRotator({
                   key={item.url}
                   src={item.url}
                   muted
-                  defaultMuted
                   playsInline
                   autoPlay={active}
                   loop={slides.length === 1}

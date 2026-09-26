@@ -9,10 +9,12 @@ export function ShareLink({
   url,
   label,
   className,
+  iconOnly,
 }: {
   url: string;
   label: string;
   className?: string;
+  iconOnly?: boolean;
 }) {
   const [copied, setCopied] = useState(false);
 
@@ -42,11 +44,17 @@ export function ShareLink({
       className={cn(
         buttonVariants({ variant: "outline", size: "sm" }),
         "active:scale-[0.98]",
+        iconOnly && "inline-grid size-8 shrink-0 place-items-center p-0",
         className,
       )}
+      aria-label={label}
     >
-      <Share2 className="size-4" aria-hidden />
-      {copied ? "Copied" : label}
+      <Share2 className="size-4 shrink-0" aria-hidden />
+      {iconOnly ? (
+        <span className="sr-only">{copied ? "Copied" : label}</span>
+      ) : (
+        (copied ? "Copied" : label)
+      )}
     </button>
   );
 }

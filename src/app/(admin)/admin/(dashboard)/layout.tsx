@@ -2,10 +2,8 @@ import { redirect } from "next/navigation";
 import Link from "next/link";
 import { getSession } from "@/lib/auth/session";
 import { getAdminBadges } from "@/server/queries/admin";
-import { getAdminSettingsRow } from "@/server/queries/admin-orders";
 import { logout } from "@/server/actions/auth";
 import { AdminNav } from "@/components/admin/admin-nav";
-import { KitchenToggle } from "@/components/admin/kitchen-toggle";
 
 export default async function DashboardLayout({
   children,
@@ -15,14 +13,11 @@ export default async function DashboardLayout({
   const session = await getSession();
   if (!session) redirect("/admin/login");
 
-  const [badges, settings] = await Promise.all([
-    getAdminBadges(),
-    getAdminSettingsRow(),
-  ]);
+  const badges = await getAdminBadges();
 
   return (
-    <div className="flex min-h-dvh flex-col lg:flex-row">
-      <aside className="flex shrink-0 flex-col border-b border-line bg-paper lg:w-60 lg:border-b-0 lg:border-r">
+    <div className="flex h-dvh flex-col overflow-hidden lg:flex-row">
+      <aside className="z-50 flex shrink-0 flex-col border-b border-line bg-paper lg:h-full lg:w-60 lg:overflow-y-auto lg:border-b-0 lg:border-r">
         <div className="flex items-center gap-2 px-5 py-4">
           <Link
             href="/admin"
@@ -55,10 +50,7 @@ export default async function DashboardLayout({
         </form>
       </aside>
 
-      <main className="min-w-0 flex-1 p-5 lg:p-8">
-        {settings ? <KitchenToggle open={settings.isAcceptingOrders} /> : null}
-        {children}
-      </main>
+      <main className="min-h-0 min-w-0 flex-1 overflow-y-auto p-5 lg:p-8">{children}</main>
     </div>
   );
 }

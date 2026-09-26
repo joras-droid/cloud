@@ -356,8 +356,8 @@ async function seed() {
       },
     ],
     supportPhone: "9847104744",
-    bannerEn: "Free delivery on orders above Rs 1,500",
-    bannerNe: "रु १,५०० माथिको अर्डरमा डेलिभरी नि:शुल्क",
+    bannerEn: "Free delivery on orders above Rs 1,000",
+    bannerNe: "रु १,००० माथिको अर्डरमा डेलिभरी नि:शुल्क",
   });
 
   const [zone] = await db.select().from(s.deliveryZones).limit(1);

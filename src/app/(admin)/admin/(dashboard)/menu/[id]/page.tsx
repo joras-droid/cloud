@@ -1,6 +1,4 @@
-import Link from "next/link";
-import { notFound } from "next/navigation";
-import { requireAdmin } from "@/lib/auth/session";
+import { AdminBackLink } from "@/components/admin/admin-back-link";
 import { ItemEditor } from "@/components/admin/item-editor";
 import { getAdminCategories, getAdminItem } from "@/server/queries/admin-menu";
 
@@ -45,13 +43,8 @@ function ItemPageFrame({
 }) {
   return (
     <div>
-      <Link
-        href="/admin/menu"
-        className="focus-ring mb-4 inline-block rounded text-sm text-ink-soft hover:text-ink"
-      >
-        ← Menu
-      </Link>
-      <h1 className="mb-6 font-display text-2xl font-bold text-ink">{title}</h1>
+      <AdminBackLink href="/admin/menu">← Menu</AdminBackLink>
+      <h1 className="mb-6 mt-4 font-display text-2xl font-bold text-ink">{title}</h1>
       {children}
     </div>
   );

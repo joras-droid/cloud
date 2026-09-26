@@ -40,7 +40,9 @@ function loadEnv(): ServerEnv {
   // An unset credential in .env reads as "", which is not the same as absent to
   // Zod. Normalise so optional-with-default fields behave as intended.
   const raw = Object.fromEntries(
-    Object.entries(process.env).filter(([, v]) => v !== ""),
+    Object.entries(process.env)
+      .map(([k, v]) => [k, typeof v === "string" ? v.trim() : v] as const)
+      .filter(([, v]) => v !== ""),
   );
   const parsed = serverSchema.safeParse(raw);
   if (!parsed.success) {

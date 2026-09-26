@@ -1,9 +1,14 @@
 import Image from "next/image";
-import Link from "next/link";
 import { Phone } from "lucide-react";
 import { notFound } from "next/navigation";
 import { requireAdmin } from "@/lib/auth/session";
 import { getAdminOrder } from "@/server/queries/admin-orders";
+import {
+  AddressWithActions,
+  CopyIconButton,
+  PhoneWithActions,
+} from "@/components/admin/contact-actions";
+import { AdminBackLink } from "@/components/admin/admin-back-link";
 import { OrderStatusPill } from "@/components/admin/order-status-pill";
 import { CopyText } from "@/components/copy-text";
 import { ShareLink } from "@/components/share-link";
@@ -15,12 +20,11 @@ import { trackPageUrl } from "@/lib/track/url";
 import { cn } from "@/lib/utils";
 import {
   cancelOrder,
-  confirmCod,
   rejectPayment,
   setOrderStatus,
-  verifyPayment,
 } from "@/server/actions/orders";
 import { deliveryAfterHoursLabel } from "@/lib/checkout/delivery-timing";
+import { formatOrderCreatedAt } from "@/lib/format-order-created";
 import { formatPaisa } from "@/lib/money";
 
 export const dynamic = "force-dynamic";
@@ -46,31 +50,25 @@ export default async function OrderDetailPage({
     .join(", ");
 
   return (
-    <div className="max-w-4xl pb-28 lg:pb-0">
-      <Link
-        href="/admin/orders"
-        className="focus-ring mb-4 inline-block rounded text-sm text-ink-soft hover:text-ink"
-      >
-        ← Orders
-      </Link>
+    <div className="w-full min-w-0 max-w-4xl pb-28 lg:pb-0">
+      <AdminBackLink href="/admin/orders">← Orders</AdminBackLink>
 
-      <header className="mb-6 flex flex-wrap items-start justify-between gap-3">
+      <header className="mb-6 mt-4 flex flex-wrap items-start justify-between gap-3">
         <div>
-          <h1 className="font-mono text-2xl font-bold text-ink">
-            {order.orderCode}
+          <h1 className="text-2xl font-bold tabular-nums text-ink">
+            {formatOrderCreatedAt(order.placedAt)}
           </h1>
-          <p className="mt-1 text-ink-soft">
-            {order.customer.name} · {order.customer.phone}
-          </p>
+          <p className="mt-1 font-medium text-ink">{order.customer.name}</p>
+          <p className="mt-0.5 font-mono text-xs text-ink-faint">{order.orderCode}</p>
         </div>
         <OrderStatusPill status={order.status} />
       </header>
 
-      <div className="flex flex-col gap-4 lg:grid lg:grid-cols-[1fr_22rem] lg:items-start lg:gap-6">
-        <div className="contents lg:grid lg:gap-6">
+      <div className="flex min-w-0 flex-col gap-4 lg:grid lg:grid-cols-[minmax(0,1fr)_minmax(0,22rem)] lg:items-start lg:gap-6">
+        <div className="contents min-w-0 lg:grid lg:gap-6">
           <section
             style={{ animationDelay: "80ms" }}
-            className="animate-rise order-3 rounded-card border border-line bg-paper p-5 lg:order-none"
+            className="animate-rise order-3 min-w-0 overflow-hidden rounded-card border border-line bg-paper p-5 lg:order-none"
           >
             <h2 className="font-display text-lg font-bold">Items</h2>
             <ul className="mt-3 divide-y divide-line">
@@ -109,89 +107,61 @@ export default async function OrderDetailPage({
             </dl>
           </section>
 
-          <section className="animate-rise order-1 rounded-card border border-line bg-paper p-5 lg:order-none">
+          <section className="animate-rise order-1 min-w-0 overflow-hidden rounded-card border border-line bg-paper p-5 lg:order-none">
             <h2 className="font-display text-lg font-bold">Deliver to</h2>
-            <div className="mt-3 grid gap-3">
-              <div className="flex flex-col gap-3 rounded-xl border border-line px-4 py-3 sm:flex-row sm:items-start sm:justify-between">
-                <div className="min-w-0">
-                  <p className="text-xs font-semibold uppercase tracking-wide text-ink-faint">
-                    Phone
-                  </p>
-                  <p className="mt-0.5 font-medium tabular-nums">
-                    {order.customer.phone}
-                  </p>
-                  <p className="mt-1 text-sm font-medium">
-                    {order.callRequested ? "Call the customer" : "Do not call"}
-                  </p>
-                </div>
-                <div className="flex shrink-0 items-center gap-1">
-                  <a
-                    href={telHref(order.customer.phone)}
-                    className={cn(buttonVariants({ size: "sm" }), "max-lg:h-12 max-lg:px-4")}
-                  >
-                    <Phone className="size-4" aria-hidden />
-                    Call
-                  </a>
-                  <CopyText
-                    value={order.customer.phone}
-                    label="Copy phone number"
-                    copyLabel="Copy"
-                    copiedLabel="Copied"
-                  />
-                </div>
-              </div>
-              <div className="flex flex-col gap-3 rounded-xl border border-line px-4 py-3 sm:flex-row sm:items-start sm:justify-between">
-                <div className="min-w-0">
-                  <p className="text-xs font-semibold uppercase tracking-wide text-ink-faint">
-                    Location
-                  </p>
-                  <p className="mt-0.5 font-medium">{order.addressLine}</p>
-                  {order.landmark ? (
-                    <p className="text-sm text-ink-soft">
-                      Landmark: {order.landmark}
-                    </p>
-                  ) : null}
-                  <p className="text-sm text-ink-soft">{order.zone.nameEn}</p>
-                  <p className="mt-2 text-sm font-medium text-ink">
-                    Deliver: {deliveryAfterHoursLabel(order.deliveryAfterHours)}
-                  </p>
-                  {order.mapUrl ? (
-                    <p className="mt-1">
-                      <a
-                        href={order.mapUrl}
-                        target="_blank"
-                        rel="noreferrer"
-                        className="text-sm text-brand-700 underline"
-                      >
-                        Google Maps
-                      </a>
-                    </p>
-                  ) : null}
-                </div>
-                <CopyText
-                  value={locationCopy}
-                  label="Copy location"
-                  copyLabel="Copy"
-                  copiedLabel="Copied"
-                  className="max-lg:h-12"
+            <div className="mt-3 grid min-w-0 gap-3">
+              <div className="min-w-0 rounded-xl border border-line px-4 py-3">
+                <p className="text-xs font-semibold uppercase tracking-wide text-ink-faint">
+                  Phone
+                </p>
+                <PhoneWithActions
+                  phone={order.customer.phone}
+                  className="mt-1 font-medium text-ink"
                 />
+                <p className="mt-1 text-sm font-medium">
+                  {order.callRequested ? "Call the customer" : "Do not call"}
+                </p>
+              </div>
+              <div className="min-w-0 rounded-xl border border-line px-4 py-3">
+                <p className="text-xs font-semibold uppercase tracking-wide text-ink-faint">
+                  Location
+                </p>
+                <AddressWithActions
+                  addressLine={order.addressLine}
+                  copyValue={locationCopy}
+                  className="mt-1 font-medium"
+                />
+                {order.landmark ? (
+                  <p className="mt-1 text-sm text-ink-soft">
+                    Landmark: {order.landmark}
+                  </p>
+                ) : null}
+                <p className="text-sm text-ink-soft">{order.zone.nameEn}</p>
+                <p className="mt-2 text-sm font-medium text-ink">
+                  Deliver: {deliveryAfterHoursLabel(order.deliveryAfterHours)}
+                </p>
+                {order.mapUrl ? (
+                  <p className="mt-1">
+                    <a
+                      href={order.mapUrl}
+                      target="_blank"
+                      rel="noreferrer"
+                      className="text-sm text-brand-700 underline"
+                    >
+                      Google Maps
+                    </a>
+                  </p>
+                ) : null}
               </div>
               {trackUrl ? (
-                <div className="flex flex-col gap-3 rounded-xl border border-line px-4 py-3 sm:flex-row sm:items-start sm:justify-between">
-                  <div className="min-w-0">
-                    <p className="text-xs font-semibold uppercase tracking-wide text-ink-faint">
-                      Track link
-                    </p>
-                    <p className="mt-0.5 break-all text-sm font-medium">{trackUrl}</p>
-                  </div>
-                  <div className="flex shrink-0 items-center gap-1">
-                    <ShareLink url={trackUrl} label="Share" />
-                    <CopyText
-                      value={trackUrl}
-                      label="Copy track link"
-                      copyLabel="Copy"
-                      copiedLabel="Copied"
-                    />
+                <div className="min-w-0 rounded-xl border border-line px-4 py-3">
+                  <p className="text-xs font-semibold uppercase tracking-wide text-ink-faint">
+                    Track link
+                  </p>
+                  <p className="mt-1 break-all text-sm font-medium text-ink">{trackUrl}</p>
+                  <div className="mt-2 flex shrink-0 items-center gap-1">
+                    <ShareLink url={trackUrl} label="Share track link" iconOnly />
+                    <CopyIconButton value={trackUrl} label="Copy track link" />
                   </div>
                 </div>
               ) : null}
@@ -229,76 +199,9 @@ export default async function OrderDetailPage({
 
         <aside
           style={{ animationDelay: "40ms" }}
-          className="animate-rise order-2 grid gap-4 lg:order-none"
+          className="animate-rise order-2 min-w-0 grid gap-4 lg:order-none"
         >
-          {order.paymentMethod === "cod" ? (
-            <section className="rounded-card border border-herb/30 bg-herb-soft p-4">
-              <h3 className="font-semibold">Verify order</h3>
-              <p className="mt-1 text-sm text-ink-soft">
-                Confirm this cash order and send it to the kitchen.
-              </p>
-              <form action={confirmCod} className="mt-3">
-                <input type="hidden" name="orderId" value={order.id} />
-                <Button type="submit" block>
-                  Verify order
-                </Button>
-              </form>
-            </section>
-          ) : (
-            <section className="rounded-card border border-herb/30 bg-herb-soft p-4">
-              <h3 className="font-semibold">Verify order</h3>
-              <p className="mt-1 text-sm text-ink-soft">
-                Mark the payment as received and confirm the order.
-              </p>
-              <form action={verifyPayment} className="mt-3">
-                <input type="hidden" name="orderId" value={order.id} />
-                <input type="hidden" name="paymentId" value={order.payment?.id ?? ""} />
-                <Button type="submit" block>
-                  Verify order
-                </Button>
-              </form>
-            </section>
-          )}
-
-          {order.paymentMethod === "cod" ? (
-            <section className="rounded-card border border-chilli/30 bg-chilli-soft p-4">
-              <h3 className="font-semibold">Reject order</h3>
-              <p className="mt-1 text-sm text-ink-soft">
-                Cancel this order. The customer will see it as cancelled.
-              </p>
-              <form action={cancelOrder} className="mt-3 grid gap-2">
-                <input type="hidden" name="orderId" value={order.id} />
-                <Textarea name="reason" placeholder="Why is this order rejected?" />
-                <Button type="submit" variant="danger" block>
-                  Reject order
-                </Button>
-              </form>
-            </section>
-          ) : (
-            <section className="rounded-card border border-chilli/30 bg-chilli-soft p-4">
-              <h3 className="font-semibold">Reject order</h3>
-              <p className="mt-1 text-sm text-ink-soft">
-                Reject the payment so the customer can upload a new screenshot.
-              </p>
-              <form action={rejectPayment} className="mt-3 grid gap-2">
-                <input type="hidden" name="orderId" value={order.id} />
-                <input type="hidden" name="paymentId" value={order.payment?.id ?? ""} />
-                <Select name="rejectReason" defaultValue="wrong_amount">
-                  <option value="wrong_amount">Wrong amount</option>
-                  <option value="unreadable">Unreadable</option>
-                  <option value="duplicate">Duplicate</option>
-                  <option value="not_received">Not received</option>
-                  <option value="other">Other</option>
-                </Select>
-                <Textarea name="rejectNote" placeholder="Note for the customer" />
-                <Button type="submit" variant="danger" block>
-                  Reject order
-                </Button>
-              </form>
-            </section>
-          )}
-
-          <section className="grid gap-2 rounded-card border border-line bg-paper p-4">
+          <section className="grid min-w-0 gap-2 overflow-hidden rounded-card border border-line bg-paper p-4">
             <h3 className="font-semibold">Order status</h3>
             {(
               [
@@ -317,7 +220,7 @@ export default async function OrderDetailPage({
                   aria-current="step"
                   className={cn(
                     buttonVariants({ variant: "primary", block: true }),
-                    "h-auto flex-col gap-0.5 py-3",
+                    "h-auto flex-col gap-0.5 py-3 text-center [overflow-wrap:anywhere]",
                   )}
                 >
                   <span>{step.title}</span>
@@ -331,7 +234,7 @@ export default async function OrderDetailPage({
                     type="submit"
                     block
                     variant="outline"
-                    className="h-auto flex-col gap-0.5 py-3"
+                    className="h-auto flex-col gap-0.5 py-3 text-center [overflow-wrap:anywhere]"
                   >
                     <span>{step.title}</span>
                     <span className="text-xs font-normal opacity-80">{step.hint}</span>
@@ -361,27 +264,77 @@ export default async function OrderDetailPage({
         </aside>
       </div>
 
+      {order.paymentMethod === "cod" ? (
+        <section className="mt-8 rounded-card border border-chilli/30 bg-chilli-soft p-4">
+          <h3 className="font-semibold">Reject order</h3>
+          <p className="mt-1 text-sm text-ink-soft">
+            Cancel this order. The customer will see it as cancelled.
+          </p>
+          <form action={cancelOrder} className="mt-3 grid gap-2 sm:max-w-md">
+            <input type="hidden" name="orderId" value={order.id} />
+            <Textarea name="reason" placeholder="Why is this order rejected?" />
+            <Button type="submit" variant="danger" block>
+              Reject order
+            </Button>
+          </form>
+        </section>
+      ) : (
+        <section className="mt-8 rounded-card border border-chilli/30 bg-chilli-soft p-4">
+          <h3 className="font-semibold">Reject order</h3>
+          <p className="mt-1 text-sm text-ink-soft">
+            Reject the payment so the customer can upload a new screenshot.
+          </p>
+          <form action={rejectPayment} className="mt-3 grid gap-2 sm:max-w-md">
+            <input type="hidden" name="orderId" value={order.id} />
+            <input type="hidden" name="paymentId" value={order.payment?.id ?? ""} />
+            <Select name="rejectReason" defaultValue="wrong_amount">
+              <option value="wrong_amount">Wrong amount</option>
+              <option value="unreadable">Unreadable</option>
+              <option value="duplicate">Duplicate</option>
+              <option value="not_received">Not received</option>
+              <option value="other">Other</option>
+            </Select>
+            <Textarea name="rejectNote" placeholder="Note for the customer" />
+            <Button type="submit" variant="danger" block>
+              Reject order
+            </Button>
+          </form>
+        </section>
+      )}
+
       <div className="fixed inset-x-0 bottom-0 z-30 border-t border-line bg-paper/95 p-3 backdrop-blur-md lg:hidden">
-        <div className="mx-auto grid max-w-4xl grid-cols-3 gap-2 pb-[env(safe-area-inset-bottom)]">
+        <div
+          className={cn(
+            "mx-auto grid max-w-4xl gap-2 pb-[env(safe-area-inset-bottom)]",
+            trackUrl ? "grid grid-cols-3" : "grid grid-cols-2",
+          )}
+        >
           <a
             href={telHref(order.customer.phone)}
-            className={cn(buttonVariants({ size: "lg" }), "min-w-0 px-2")}
+            className={cn(
+              buttonVariants({ size: "lg" }),
+              "min-w-0 justify-center px-2 text-sm",
+            )}
           >
             <Phone className="size-4 shrink-0" aria-hidden />
-            Call
+            <span className="truncate">Call</span>
           </a>
           <CopyText
             value={locationCopy}
             label="Copy location"
-            copyLabel="Location"
-            copiedLabel="Copied"
-            className="h-13 w-full justify-center bg-paper px-2"
+            copyLabel="Copy"
+            copiedLabel="OK"
+            className="h-13 min-w-0 justify-center truncate bg-paper px-2 text-sm"
           />
           {trackUrl ? (
             <ShareLink
               url={trackUrl}
-              label="Share"
-              className="h-13 w-full justify-center px-2"
+              label="Share track link"
+              iconOnly
+              className={cn(
+                buttonVariants({ size: "lg", variant: "outline" }),
+                "h-13 min-w-0 justify-center px-2",
+              )}
             />
           ) : null}
         </div>

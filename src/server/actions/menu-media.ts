@@ -1,4 +1,4 @@
-import "server-only";
+"use server";
 
 import { createHash } from "node:crypto";
 import { mkdir, unlink } from "node:fs/promises";
@@ -19,6 +19,7 @@ import {
   menuObjectKey,
   putMenuBytes,
 } from "@/lib/media/storage";
+import { menuUploadErrorMessage } from "@/lib/media/upload-error";
 import { publishMenu } from "@/server/cache";
 import { text } from "@/server/form";
 
@@ -106,7 +107,7 @@ export async function uploadMenuMedia(form: FormData): Promise<MediaActionState>
   } catch (err) {
     if (localPath) await unlink(localPath).catch(() => {});
     console.error("menu media upload failed", err);
-    return { error: "Upload failed. Check S3 credentials and bucket access." };
+    return { error: menuUploadErrorMessage(err) };
   }
 
   let mediaId = "";

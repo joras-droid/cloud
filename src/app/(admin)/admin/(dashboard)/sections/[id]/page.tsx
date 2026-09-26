@@ -1,6 +1,6 @@
 import { notFound } from "next/navigation";
-import Link from "next/link";
 import { requireAdmin } from "@/lib/auth/session";
+import { AdminBackLink } from "@/components/admin/admin-back-link";
 import { getAdminSection } from "@/server/queries/admin-orders";
 import { getAdminMenu } from "@/server/queries/admin";
 import { getAdminMediaLibrary } from "@/server/queries/admin-menu";
@@ -25,13 +25,8 @@ export default async function SectionEditPage({
 
   return (
     <div>
-      <Link
-        href="/admin/sections"
-        className="focus-ring mb-4 inline-block rounded text-sm text-ink-soft hover:text-ink"
-      >
-        ← Sections
-      </Link>
-      <h1 className="mb-2 font-display text-2xl font-bold">{section.titleEn}</h1>
+      <AdminBackLink href="/admin/sections">← Sections</AdminBackLink>
+      <h1 className="mb-2 mt-4 font-display text-2xl font-bold">{section.titleEn}</h1>
       <p className="mb-6 text-sm text-ink-soft">
         Change words and photos like a WordPress page. Each block saves on its
         own.

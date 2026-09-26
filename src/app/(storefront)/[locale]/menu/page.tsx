@@ -2,10 +2,10 @@ import type { Metadata } from "next";
 import { getTranslations, setRequestLocale } from "next-intl/server";
 import { ItemCard } from "@/components/menu/item-card";
 import { CategoryRail } from "@/components/menu/category-rail";
-import { buttonVariants } from "@/components/ui/button";
+import { OfficesCtaLink } from "@/components/office/offices-cta-link";
 import { Link } from "@/i18n/navigation";
 import { getMenu } from "@/server/queries/menu";
-import { cn, pick } from "@/lib/utils";
+import { pick } from "@/lib/utils";
 import type { Locale } from "@/i18n/routing";
 
 export const revalidate = 3600;
@@ -40,15 +40,7 @@ export default async function MenuPage({
           </h1>
           <p className="mt-1 text-ink-soft">{t("subtitle")}</p>
         </div>
-        <Link
-          href="/offices"
-          className={cn(
-            buttonVariants({ variant: "outline", size: "sm" }),
-            "shrink-0",
-          )}
-        >
-          {t("forOffices")}
-        </Link>
+        <OfficesCtaLink size="sm">{t("forOffices")}</OfficesCtaLink>
       </header>
 
       {menu.length === 0 ? (

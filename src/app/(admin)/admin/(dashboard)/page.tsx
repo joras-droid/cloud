@@ -7,8 +7,10 @@ import {
   Phone,
   ShoppingBag,
 } from "lucide-react";
+import { KitchenToggle } from "@/components/admin/kitchen-toggle";
 import { requireAdmin } from "@/lib/auth/session";
 import { getDashboardStats } from "@/server/queries/admin";
+import { getAdminSettingsRow } from "@/server/queries/admin-orders";
 import { formatPaisa } from "@/lib/money";
 import { cn } from "@/lib/utils";
 
@@ -17,7 +19,10 @@ export const metadata = { title: "Dashboard" };
 
 export default async function AdminDashboard() {
   const session = await requireAdmin();
-  const stats = await getDashboardStats();
+  const [stats, settings] = await Promise.all([
+    getDashboardStats(),
+    getAdminSettingsRow(),
+  ]);
 
   const cards = [
     {
@@ -63,6 +68,7 @@ export default async function AdminDashboard() {
 
   return (
     <div>
+      {settings ? <KitchenToggle open={settings.isAcceptingOrders} /> : null}
       <header className="mb-6">
         <h1 className="font-display text-2xl font-bold text-ink">
           Good to see you, {session.name.split(" ")[0]}

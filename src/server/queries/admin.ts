@@ -1,7 +1,8 @@
 import "server-only";
-import { and, count, desc, eq, gte, inArray, ne, sql, sum } from "drizzle-orm";
+import { and, asc, count, desc, eq, gte, inArray, ne, or, sql, sum } from "drizzle-orm";
 import { db } from "@/db";
 import * as s from "@/db/schema";
+import { deliveredBoardVisibleSince } from "@/lib/admin/order-board-window";
 import { mediaUrl } from "@/lib/media";
 
 /** Statuses that need a human to do something. Drives the sidebar badges. */
@@ -89,6 +90,12 @@ export async function getDashboardStats() {
   };
 }
 
+export type BoardOrderItem = {
+  nameEn: string;
+  qty: number;
+  lineTotal: number;
+};
+
 export type AdminOrderRow = {
   id: string;
   orderCode: string;
@@ -97,13 +104,17 @@ export type AdminOrderRow = {
   total: number;
   customerName: string;
   customerPhone: string;
+  addressLine: string;
   zone: string;
   placedAt: Date;
   deliveryAfterHours: number;
   itemCount: number;
+  items: BoardOrderItem[];
 };
 
 export async function getOrderBoard(): Promise<AdminOrderRow[]> {
+  const deliveredSince = deliveredBoardVisibleSince().toISOString();
+
   const rows = await db
     .select({
       id: s.orders.id,
@@ -113,6 +124,7 @@ export async function getOrderBoard(): Promise<AdminOrderRow[]> {
       total: s.orders.total,
       customerName: s.customers.name,
       customerPhone: s.customers.phone,
+      addressLine: s.orders.addressLine,
       zone: s.deliveryZones.nameEn,
       placedAt: s.orders.placedAt,
       deliveryAfterHours: s.orders.deliveryAfterHours,
@@ -125,11 +137,57 @@ export async function getOrderBoard(): Promise<AdminOrderRow[]> {
     .from(s.orders)
     .innerJoin(s.customers, eq(s.orders.customerId, s.customers.id))
     .innerJoin(s.deliveryZones, eq(s.orders.zoneId, s.deliveryZones.id))
-    .where(ne(s.orders.status, "cancelled"))
-    .orderBy(desc(s.orders.placedAt))
+    .leftJoin(s.deliveries, eq(s.deliveries.orderId, s.orders.id))
+    .where(
+      and(
+        ne(s.orders.status, "cancelled"),
+        or(
+          ne(s.orders.status, "delivered"),
+          sql`coalesce(
+            ${s.deliveries.deliveredAt},
+            (
+              select max(${s.orderEvents.createdAt})
+              from ${s.orderEvents}
+              where ${s.orderEvents.orderId} = ${s.orders.id}
+                and ${s.orderEvents.toStatus} = 'delivered'
+            ),
+            ${s.orders.placedAt}
+          ) >= ${deliveredSince}::timestamptz`,
+        ),
+      ),
+    )
+    .orderBy(asc(s.orders.placedAt))
     .limit(200);
 
-  return rows.map((r) => ({ ...r, itemCount: Number(r.itemCount) }));
+  if (rows.length === 0) return [];
+
+  const ids = rows.map((r) => r.id);
+  const itemRows = await db
+    .select({
+      orderId: s.orderItems.orderId,
+      nameEn: s.orderItems.nameEnSnapshot,
+      qty: s.orderItems.qty,
+      lineTotal: s.orderItems.lineTotal,
+    })
+    .from(s.orderItems)
+    .where(inArray(s.orderItems.orderId, ids));
+
+  const itemsByOrder = new Map<string, BoardOrderItem[]>();
+  for (const item of itemRows) {
+    const list = itemsByOrder.get(item.orderId) ?? [];
+    list.push({
+      nameEn: item.nameEn,
+      qty: item.qty,
+      lineTotal: item.lineTotal,
+    });
+    itemsByOrder.set(item.orderId, list);
+  }
+
+  return rows.map((r) => ({
+    ...r,
+    itemCount: Number(r.itemCount),
+    items: itemsByOrder.get(r.id) ?? [],
+  }));
 }
 
 export type AdminMenuRow = {

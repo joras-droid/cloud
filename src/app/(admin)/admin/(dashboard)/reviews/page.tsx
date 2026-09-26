@@ -16,8 +16,8 @@ export default async function ReviewsPage() {
       <header className="mb-6">
         <h1 className="font-display text-2xl font-bold text-ink">Reviews</h1>
         <p className="mt-1 text-ink-soft">
-          Reviews from a dish page go live right away. You can still edit or
-          remove any of them.
+          New reviews stay in Pending until you approve them. Only approved reviews
+          show on the site.
         </p>
       </header>
 

@@ -16,7 +16,7 @@ export default async function OrdersPage() {
       <header className="mb-6">
         <h1 className="font-display text-2xl font-bold text-ink">Orders</h1>
         <p className="mt-1 text-ink-soft">
-          {orders.length} {orders.length === 1 ? "order" : "orders"}
+          {orders.length} {orders.length === 1 ? "order" : "orders"} · new orders first
         </p>
       </header>
 
@@ -33,9 +33,13 @@ export default async function OrdersPage() {
             paymentMethod: order.paymentMethod,
             total: order.total,
             customerName: order.customerName,
+            customerPhone: order.customerPhone,
+            addressLine: order.addressLine,
             zone: order.zone,
+            placedAt: order.placedAt.toISOString(),
             itemCount: order.itemCount,
             deliveryAfterHours: order.deliveryAfterHours,
+            items: order.items,
           }))}
         />
       )}

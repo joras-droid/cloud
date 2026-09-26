@@ -1,15 +1,18 @@
 import { ArrowRight } from "lucide-react";
 import { getTranslations, setRequestLocale } from "next-intl/server";
 import { Link } from "@/i18n/navigation";
+import { HomeOfficesSection } from "@/components/home/home-offices-section";
 import { ItemCard } from "@/components/menu/item-card";
+import { CategoryRail } from "@/components/menu/category-rail";
+import { OfficesCtaLink } from "@/components/office/offices-cta-link";
 import { HomeReviews } from "@/components/reviews/home-reviews";
+import { SectionRenderer } from "@/components/sections/section-renderer";
 import { buttonVariants } from "@/components/ui/button";
+import type { Locale } from "@/i18n/routing";
 import { getMenu } from "@/server/queries/menu";
 import { getRecentReviews } from "@/server/queries/reviews";
 import { getPublishedSections } from "@/server/queries/sections";
-import { SectionRenderer } from "@/components/sections/section-renderer";
-import type { Locale } from "@/i18n/routing";
-import { cn } from "@/lib/utils";
+import { cn, pick } from "@/lib/utils";
 
 export const revalidate = 3600;
 
@@ -22,13 +25,12 @@ export default async function HomePage({
   setRequestLocale(locale);
 
   const t = await getTranslations("home");
+  const tNav = await getTranslations("nav");
   const [menu, sections, reviews] = await Promise.all([
     getMenu(),
     getPublishedSections("home"),
     getRecentReviews(8),
   ]);
-
-  const featured = menu.flatMap((c) => c.items).slice(0, 6);
 
   return (
     <>
@@ -49,6 +51,7 @@ export default async function HomePage({
                 {t("orderNow")}
                 <ArrowRight className="size-4" aria-hidden />
               </Link>
+              <OfficesCtaLink size="lg">{tNav("forOffices")}</OfficesCtaLink>
               <Link
                 href="/story"
                 className={buttonVariants({ variant: "outline", size: "lg" })}
@@ -63,28 +66,51 @@ export default async function HomePage({
       </section>
 
       <section className="mx-auto max-w-6xl px-4 py-14">
-        <div className="mb-6 flex items-end justify-between gap-4">
-          <div>
-            <h2 className="font-display text-2xl font-bold text-ink sm:text-3xl">
-              {t("featured")}
-            </h2>
-            <p className="mt-1 text-ink-soft">{t("featuredSubtitle")}</p>
-          </div>
-          <Link
-            href="/menu"
-            className="focus-ring hidden shrink-0 items-center gap-1 rounded-lg text-sm font-semibold text-brand-700 hover:text-brand-800 sm:inline-flex"
-          >
-            {t("viewMenu")}
-            <ArrowRight className="size-4" aria-hidden />
-          </Link>
+        <div className="mb-6">
+          <h2 className="font-display text-2xl font-bold text-ink sm:text-3xl">
+            {t("fullMenu")}
+          </h2>
+          <p className="mt-1 text-ink-soft">{t("fullMenuSubtitle")}</p>
         </div>
 
-        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-          {featured.map((item, i) => (
-            <ItemCard key={item.id} item={item} priority={i < 3} />
-          ))}
-        </div>
+        {menu.length === 0 ? (
+          <p className="py-12 text-center text-ink-soft">{t("viewMenu")}</p>
+        ) : (
+          <>
+            <CategoryRail
+              categories={menu.map((c) => ({
+                slug: c.slug,
+                name: pick(locale, c.nameEn, c.nameNe),
+              }))}
+            />
+
+            <div className="mt-8 space-y-12">
+              {menu.map((category, ci) => (
+                <section
+                  key={category.id}
+                  id={category.slug}
+                  className="scroll-mt-32"
+                >
+                  <h3 className="mb-4 font-display text-2xl font-bold text-ink">
+                    {pick(locale, category.nameEn, category.nameNe)}
+                  </h3>
+                  <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+                    {category.items.map((item, ii) => (
+                      <ItemCard
+                        key={item.id}
+                        item={item}
+                        priority={ci === 0 && ii < 3}
+                      />
+                    ))}
+                  </div>
+                </section>
+              ))}
+            </div>
+          </>
+        )}
       </section>
+
+      <HomeOfficesSection />
 
       {sections.map((section) => (
         <SectionRenderer key={section.id} section={section} locale={locale} />

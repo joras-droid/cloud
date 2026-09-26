@@ -3,6 +3,7 @@ import { Link } from "@/i18n/navigation";
 import { VegMark } from "@/components/veg-mark";
 import { LanguageSwitch } from "./language-switch";
 import { CartButton } from "./cart/cart-button";
+import { OfficesNavLink } from "@/components/office/offices-cta-link";
 
 export function SiteHeader({ banner }: { banner?: string | null }) {
   const t = useTranslations("nav");
@@ -44,6 +45,7 @@ export function SiteHeader({ banner }: { banner?: string | null }) {
           >
             {t("story")}
           </Link>
+          <OfficesNavLink>{t("forOffices")}</OfficesNavLink>
           <Link
             href="/track"
             className="focus-ring rounded-lg px-3 py-2 text-sm font-medium text-ink-soft hover:text-ink"

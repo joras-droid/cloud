@@ -88,9 +88,29 @@ export default async function CheckoutDonePage({
             <dd className="text-right">{t(deliveryWhenKey)}</dd>
           </div>
           <div className="flex justify-between">
+            <dt className="text-ink-soft">{tCart("subtotal")}</dt>
+            <dd className="tabular-nums">{formatPaisa(order.subtotal, locale)}</dd>
+          </div>
+          <div className="text-sm text-ink-soft">{t("deliveryDistanceNote")}</div>
+          <div className="flex justify-between gap-4">
             <dt className="text-ink-soft">{tCart("total")}</dt>
+            <dd className="text-right font-medium tabular-nums">
+              {order.deliveryFee === 0
+                ? t("totalPlusDeliveryFree", {
+                    food: formatPaisa(order.subtotal, locale),
+                  })
+                : t("totalPlusDeliveryValue", {
+                    food: formatPaisa(order.subtotal, locale),
+                  })}
+            </dd>
+          </div>
+          {order.deliveryFee > 0 ? (
+            <div className="text-xs text-ink-soft">{t("deliverySelfPaidBelow")}</div>
+          ) : null}
+          <div className="flex justify-between border-t border-line pt-2">
+            <dt className="font-semibold">{t("amountToPay")}</dt>
             <dd className="font-semibold tabular-nums">
-              {formatPaisa(order.total, locale)}
+              {formatPaisa(order.subtotal, locale)}
             </dd>
           </div>
         </dl>

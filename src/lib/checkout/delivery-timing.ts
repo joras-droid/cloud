@@ -9,6 +9,13 @@ export function parseDeliveryAfterHours(raw: string): DeliveryAfterHours | null 
   return n as DeliveryAfterHours;
 }
 
+/** Short label for tight admin chips (English). */
+export function deliveryAfterHoursShort(hours: number): string {
+  if (hours === 0) return "ASAP";
+  if (hours === 1) return "After 1 hr";
+  return `After ${hours} hrs`;
+}
+
 /** Short label for admin and logs (English). */
 export function deliveryAfterHoursLabel(hours: number): string {
   if (hours === 0) return "As soon as possible";

@@ -17,6 +17,7 @@ import {
   deliveryAfterHoursLabel,
   parseDeliveryAfterHours,
 } from "@/lib/checkout/delivery-timing";
+import { computeDeliveryFee } from "@/lib/checkout/delivery-fee";
 import { isQrMethod } from "@/lib/payment-methods";
 import { getStoreSettings, prepayReady } from "@/server/queries/settings";
 import type { Locale } from "@/i18n/routing";
@@ -162,8 +163,9 @@ export async function placeOrder(
     };
   }
 
-  const deliveryFee = zone.fee;
-  const total = subtotal + deliveryFee;
+  const deliveryFee = computeDeliveryFee(subtotal, zone.fee);
+  /** Food only — rider delivery fee (when any) is collected separately. */
+  const total = subtotal;
 
   if (payKind === "prepay" && !prepayReady(settings.prepayEnabled, settings.qrImages)) {
     return { error: "Prepayment is not available right now." };

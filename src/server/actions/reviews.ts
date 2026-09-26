@@ -59,8 +59,7 @@ export async function submitItemReview(
     authorName,
     rating,
     body,
-    status: "approved",
-    publishedAt: new Date(),
+    status: "pending",
   });
 
   await publishReviews();

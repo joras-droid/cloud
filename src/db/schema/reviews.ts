@@ -15,22 +15,24 @@ import { customers, orders } from "./orders";
 import { reviewStatus } from "./enums";
 
 /**
- * Always tied to a delivered order, which is what earns the "Verified order"
- * badge. Status defaults to `pending`; the public query layer filters on
+ * A review of a dish. `orderId` is set when it came from a delivered order,
+ * which is what earns the "Verified order" badge. Public reviews from the
+ * dish page leave it empty and store a display name instead.
+ * Status defaults to `pending`; the public query layer filters on
  * `approved` so an unmoderated review can never leak into a page or a rating.
  */
 export const reviews = pgTable(
   "reviews",
   {
     id: uuid("id").primaryKey().defaultRandom(),
-    orderId: uuid("order_id")
-      .notNull()
-      .references(() => orders.id, { onDelete: "cascade" }),
+    orderId: uuid("order_id").references(() => orders.id, {
+      onDelete: "cascade",
+    }),
     /** Null for the overall order rating, set for a per-item rating. */
     itemId: uuid("item_id").references(() => menuItems.id),
-    customerId: uuid("customer_id")
-      .notNull()
-      .references(() => customers.id),
+    customerId: uuid("customer_id").references(() => customers.id),
+    /** Shown on the dish page when there is no customer record. */
+    authorName: text("author_name"),
     rating: smallint("rating").notNull(),
     body: text("body"),
     status: reviewStatus("status").notNull().default("pending"),
@@ -62,7 +64,7 @@ export const reviewMedia = pgTable(
   (t) => [primaryKey({ columns: [t.reviewId, t.mediaId] })],
 );
 
-/** Admins may reply publicly, but never edit the customer's own words. */
+/** Admins may reply publicly, and may also edit or remove the review itself. */
 export const reviewReplies = pgTable("review_replies", {
   id: uuid("id").primaryKey().defaultRandom(),
   reviewId: uuid("review_id")

@@ -1,7 +1,7 @@
-import Image from "next/image";
 import { Flame, Leaf } from "lucide-react";
 import { useLocale, useTranslations } from "next-intl";
 import { Link } from "@/i18n/navigation";
+import { MediaRotator } from "@/components/menu/media-rotator";
 import { formatPaisa } from "@/lib/money";
 import { pick } from "@/lib/utils";
 import type { MenuItem } from "@/server/queries/menu";
@@ -23,16 +23,12 @@ export function ItemCard({
   return (
     <article className="group relative flex gap-4 rounded-card border border-line bg-paper p-3 shadow-card transition-shadow hover:shadow-lifted sm:flex-col sm:p-0">
       <div className="relative size-24 shrink-0 overflow-hidden rounded-xl bg-line sm:aspect-[4/3] sm:size-auto sm:w-full sm:rounded-b-none sm:rounded-t-card">
-        {item.image ? (
-          <Image
-            src={item.image}
+        {item.media.length > 0 ? (
+          <MediaRotator
+            slides={item.media}
             alt={pick(locale, item.imageAltEn, item.imageAltNe) || name}
-            fill
-            // Explicit sizes keeps the browser from fetching a 1200px file for
-            // a 96px thumbnail on mobile.
             sizes="(max-width: 640px) 96px, (max-width: 1024px) 45vw, 30vw"
             priority={priority}
-            className="object-cover transition-transform duration-300 group-hover:scale-105"
           />
         ) : null}
         {item.isSoldOut ? (
@@ -76,16 +72,8 @@ export function ItemCard({
 
         <div className="mt-auto flex items-center gap-3 pt-3">
           <p className="font-semibold text-ink tabular-nums">
-            {item.variants.length > 1 ? (
-              <span className="mr-1 text-xs font-normal text-ink-faint">
-                {t("from")}
-              </span>
-            ) : null}
             {formatPaisa(item.basePrice, locale)}
           </p>
-          <span className="text-xs text-ink-faint">
-            {t("prepTime", { minutes: item.prepMinutes })}
-          </span>
           {/* Sits above the stretched link so taps hit the button. */}
           <ItemActions item={item} className="relative z-10 ml-auto" />
         </div>

@@ -1,11 +1,12 @@
 import type { Metadata } from "next";
-import Image from "next/image";
 import { notFound } from "next/navigation";
-import { ArrowLeft, Flame, Leaf, Timer } from "lucide-react";
+import { ArrowLeft, Flame, Leaf } from "lucide-react";
 import { getTranslations, setRequestLocale } from "next-intl/server";
 import { Link } from "@/i18n/navigation";
+import { MediaRotator } from "@/components/menu/media-rotator";
 import { Badge } from "@/components/ui/badge";
 import { ItemActions } from "@/components/menu/item-actions";
+import { ReviewForm } from "@/components/reviews/review-form";
 import { ReviewList } from "@/components/reviews/review-list";
 import { getMenu, getMenuItem } from "@/server/queries/menu";
 import { getApprovedReviews } from "@/server/queries/reviews";
@@ -52,6 +53,7 @@ export default async function ItemPage({
 
   const name = pick(locale, item.nameEn, item.nameNe);
   const desc = pick(locale, item.descEn, item.descNe);
+  const remarks = pick(locale, item.remarksEn, item.remarksNe);
 
   return (
     <div className="mx-auto max-w-4xl px-4 py-6">
@@ -64,15 +66,14 @@ export default async function ItemPage({
       </Link>
 
       <div className="grid gap-8 sm:grid-cols-2">
-        {item.image ? (
+        {item.media.length > 0 ? (
           <div className="relative aspect-[4/3] overflow-hidden rounded-card shadow-card">
-            <Image
-              src={item.image}
+            <MediaRotator
+              slides={item.media}
               alt={pick(locale, item.imageAltEn, item.imageAltNe) || name}
-              fill
-              priority
               sizes="(max-width: 640px) 100vw, 50vw"
-              className="object-cover"
+              priority
+              interactive
             />
           </div>
         ) : null}
@@ -95,14 +96,19 @@ export default async function ItemPage({
                 {tMenu("spice")} {item.spiceLevel}/4
               </Badge>
             ) : null}
-            <Badge>
-              <Timer className="size-3" aria-hidden />
-              {tMenu("prepTime", { minutes: item.prepMinutes })}
-            </Badge>
           </div>
 
           {desc ? (
             <p className="mt-4 leading-relaxed text-ink-soft">{desc}</p>
+          ) : null}
+
+          {remarks ? (
+            <p className="mt-4 rounded-xl bg-brand-50 px-4 py-3 text-sm leading-relaxed text-ink">
+              <span className="mb-1 block text-xs font-semibold uppercase tracking-wide text-brand-700">
+                {t("remarks")}
+              </span>
+              {remarks}
+            </p>
           ) : null}
 
           <div className="mt-auto flex items-center gap-4 pt-6">
@@ -118,6 +124,7 @@ export default async function ItemPage({
         <h2 className="mb-4 font-display text-2xl font-bold text-ink">
           {t("reviews")}
         </h2>
+        <ReviewForm itemId={item.id} />
         <ReviewList reviews={reviews} locale={locale} />
       </section>
     </div>

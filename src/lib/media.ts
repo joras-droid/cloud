@@ -7,7 +7,13 @@ import { env } from "@/env";
  */
 export function mediaUrl(r2Key: string | null | undefined): string | null {
   if (!r2Key) return null;
-  if (r2Key.startsWith("http://") || r2Key.startsWith("https://")) return r2Key;
+  if (
+    r2Key.startsWith("http://") ||
+    r2Key.startsWith("https://") ||
+    r2Key.startsWith("/")
+  ) {
+    return r2Key;
+  }
   if (!env.R2_PUBLIC_BASE_URL) return null;
   return `${env.R2_PUBLIC_BASE_URL.replace(/\/$/, "")}/${r2Key}`;
 }

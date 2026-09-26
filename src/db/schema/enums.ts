@@ -91,3 +91,6 @@ export const blockKind = pgEnum("block_kind", [
 ]);
 
 export const locale = pgEnum("locale", ["en", "ne"]);
+
+/** What a business wants delivered on the days they pick. */
+export const officeMeal = pgEnum("office_meal", ["lunch", "snacks", "both"]);

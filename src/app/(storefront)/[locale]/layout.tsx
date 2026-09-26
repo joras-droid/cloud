@@ -5,6 +5,7 @@ import { getTranslations, setRequestLocale } from "next-intl/server";
 import { Inter, Fraunces, Noto_Sans_Devanagari } from "next/font/google";
 import { routing, type Locale } from "@/i18n/routing";
 import { SiteHeader } from "@/components/site-header";
+import { VegBackdrop } from "@/components/veg-backdrop";
 import { SiteFooter } from "@/components/site-footer";
 import { CartBar } from "@/components/cart/cart-bar";
 import { getStoreSettings } from "@/server/queries/settings";
@@ -74,13 +75,16 @@ export default async function StorefrontLayout({
       className={`${inter.variable} ${fraunces.variable} ${devanagari.variable} h-full`}
     >
       <body className="flex min-h-full flex-col font-sans">
+        <VegBackdrop />
         <NextIntlClientProvider>
-          <SiteHeader
-            banner={locale === "ne" ? settings.bannerNe : settings.bannerEn}
-          />
-          <main className="flex-1">{children}</main>
-          <SiteFooter supportPhone={settings.supportPhone} />
-          <CartBar />
+          <div className="relative z-10 flex min-h-full flex-1 flex-col">
+            <SiteHeader
+              banner={locale === "ne" ? settings.bannerNe : settings.bannerEn}
+            />
+            <main className="flex-1">{children}</main>
+            <SiteFooter supportPhone={settings.supportPhone} />
+            <CartBar />
+          </div>
         </NextIntlClientProvider>
       </body>
     </html>

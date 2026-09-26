@@ -20,7 +20,7 @@ export function CartBar() {
   const subtotal = useCartSubtotal();
   const hydrated = useCartStore((s) => s.hydrated);
 
-  const hiddenOn = ["/cart", "/checkout", "/checkout/payment"];
+  const hiddenOn = ["/cart", "/checkout", "/checkout/payment", "/track"];
   if (!hydrated || count === 0 || hiddenOn.some((p) => pathname.startsWith(p)))
     return null;
 

@@ -34,6 +34,9 @@ export const menuItems = pgTable(
     nameNe: text("name_ne"),
     descEn: text("desc_en"),
     descNe: text("desc_ne"),
+    /** Extra note the kitchen wants the customer to see — not a structured option. */
+    remarksEn: text("remarks_en"),
+    remarksNe: text("remarks_ne"),
     /** Paisa. Never a float. */
     basePrice: integer("base_price").notNull(),
     isVeg: boolean("is_veg").notNull().default(false),

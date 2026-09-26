@@ -12,8 +12,8 @@ import { z } from "zod";
  */
 
 const mediaRef = z.object({
-  mediaId: z.uuid(),
-  url: z.string(),
+  mediaId: z.string().optional(),
+  url: z.string().min(1),
   altEn: z.string().nullable().optional(),
   altNe: z.string().nullable().optional(),
 });

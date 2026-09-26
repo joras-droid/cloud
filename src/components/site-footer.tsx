@@ -25,6 +25,9 @@ export function SiteFooter({ supportPhone }: { supportPhone?: string | null }) {
           <Link href="/story" className="focus-ring rounded text-ink-soft hover:text-ink">
             {t("story")}
           </Link>
+          <Link href="/track" className="focus-ring rounded text-ink-soft hover:text-ink">
+            {t("trackOrder")}
+          </Link>
         </nav>
 
         {supportPhone ? (

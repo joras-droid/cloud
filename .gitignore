@@ -20,6 +20,9 @@
 # production
 /build
 
+# local payment screenshots (R2 in production)
+/public/uploads
+
 # misc
 .DS_Store
 *.pem

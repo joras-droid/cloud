@@ -23,6 +23,10 @@ const nextConfig: NextConfig = {
   },
   experimental: {
     optimizePackageImports: ["lucide-react"],
+    // Menu videos are allowed up to 15 MB; the multipart wrapper needs a little extra.
+    serverActions: {
+      bodySizeLimit: "18mb",
+    },
   },
 };
 

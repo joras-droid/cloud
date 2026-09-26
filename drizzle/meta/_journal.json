@@ -8,6 +8,34 @@
       "when": 1790420079867,
       "tag": "0000_init",
       "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "7",
+      "when": 1790423092028,
+      "tag": "0001_menu_item_remarks",
+      "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1790424378552,
+      "tag": "0002_order_checkout_fields",
+      "breakpoints": true
+    },
+    {
+      "idx": 3,
+      "version": "7",
+      "when": 1790426162017,
+      "tag": "0003_review_author",
+      "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "7",
+      "when": 1790430259421,
+      "tag": "0004_business_inquiries",
+      "breakpoints": true
     }
   ]
 }

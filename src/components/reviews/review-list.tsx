@@ -43,12 +43,12 @@ export function ReviewList({
         >
           <div className="flex items-center gap-2">
             <Stars rating={review.rating} />
-            {/* Every review is tied to a delivered order, which is a real
-                trust signal an open review form can't offer. */}
-            <span className="ml-auto inline-flex items-center gap-1 text-xs font-medium text-herb">
-              <BadgeCheck className="size-3.5" aria-hidden />
-              {t("verifiedOrder")}
-            </span>
+            {review.verified ? (
+              <span className="ml-auto inline-flex items-center gap-1 text-xs font-medium text-herb">
+                <BadgeCheck className="size-3.5" aria-hidden />
+                {t("verifiedOrder")}
+              </span>
+            ) : null}
           </div>
 
           {review.body ? (

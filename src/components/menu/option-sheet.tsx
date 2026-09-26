@@ -30,9 +30,6 @@ export function OptionSheet({
   const locale = useLocale() as Locale;
   const add = useCartStore((s) => s.add);
 
-  const [variantId, setVariantId] = useState<string | null>(
-    () => (item.variants.find((v) => v.isDefault) ?? item.variants[0])?.id ?? null,
-  );
   const [selected, setSelected] = useState<Record<string, string[]>>(() =>
     Object.fromEntries(
       item.modifierGroups.map((g) => [
@@ -62,10 +59,8 @@ export function OptionSheet({
     [item.modifierGroups, selected],
   );
 
-  const variant = item.variants.find((v) => v.id === variantId) ?? null;
   const unitPrice =
     item.basePrice +
-    (variant?.priceDelta ?? 0) +
     chosenModifiers.reduce((sum, m) => sum + m.priceDelta, 0);
 
   const unmetGroup = item.modifierGroups.find(
@@ -88,7 +83,7 @@ export function OptionSheet({
   }
 
   return (
-    <div className="fixed inset-0 z-50 flex items-end justify-center sm:items-center">
+    <div className="fixed inset-0 z-[60] flex items-end justify-center sm:items-center">
       <button
         type="button"
         aria-label={t("chooseOptions")}
@@ -122,28 +117,6 @@ export function OptionSheet({
         </div>
 
         <div className="flex-1 overflow-y-auto px-5 py-4">
-          {item.variants.length > 1 ? (
-            <fieldset className="mb-6">
-              <legend className="mb-2 text-sm font-semibold text-ink">
-                {locale === "ne" ? "आकार" : "Size"}
-              </legend>
-              <div className="grid gap-2">
-                {item.variants.map((v) => (
-                  <OptionRow
-                    key={v.id}
-                    type="radio"
-                    name="variant"
-                    checked={variantId === v.id}
-                    onChange={() => setVariantId(v.id)}
-                    label={pick(locale, v.labelEn, v.labelNe)}
-                    delta={v.priceDelta}
-                    locale={locale}
-                  />
-                ))}
-              </div>
-            </fieldset>
-          ) : null}
-
           {item.modifierGroups.map((g) => (
             <fieldset key={g.id} className="mb-6">
               <legend className="mb-2 flex items-center gap-2 text-sm font-semibold text-ink">
@@ -207,9 +180,9 @@ export function OptionSheet({
                   nameEn: item.nameEn,
                   nameNe: item.nameNe,
                   image: item.image,
-                  variantId: variant?.id ?? null,
-                  variantLabelEn: variant?.labelEn ?? null,
-                  variantLabelNe: variant?.labelNe ?? null,
+                  variantId: null,
+                  variantLabelEn: null,
+                  variantLabelNe: null,
                   modifiers: chosenModifiers.map((m) => ({
                     id: m.id,
                     nameEn: m.nameEn,

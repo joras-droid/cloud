@@ -1,9 +1,39 @@
 "use client";
 
 import { create } from "zustand";
-import { persist } from "zustand/middleware";
+import { createJSONStorage, persist } from "zustand/middleware";
 import { useShallow } from "zustand/react/shallow";
 import { lineKey, type CartIssue, type CartLine } from "./types";
+
+/**
+ * Storage that degrades instead of throwing. Safari private mode, and the
+ * in-app browsers inside Facebook and Instagram — which is how a lot of people
+ * will reach a food page — either block localStorage or throw on write. Without
+ * this fallback the cart would be permanently stuck un-hydrated and every tap
+ * on "Add" would look like it did nothing.
+ */
+const memoryStore = new Map<string, string>();
+
+const resilientStorage = createJSONStorage(() => {
+  const available = (() => {
+    try {
+      const probe = "__gks_probe__";
+      window.localStorage.setItem(probe, probe);
+      window.localStorage.removeItem(probe);
+      return true;
+    } catch {
+      return false;
+    }
+  })();
+
+  if (available) return window.localStorage;
+
+  return {
+    getItem: (name: string) => memoryStore.get(name) ?? null,
+    setItem: (name: string, value: string) => void memoryStore.set(name, value),
+    removeItem: (name: string) => void memoryStore.delete(name),
+  };
+});
 
 type CartState = {
   lines: CartLine[];
@@ -13,6 +43,7 @@ type CartState = {
    * that point would mismatch the server HTML and flash an empty badge.
    */
   hydrated: boolean;
+  setHydrated: () => void;
   add: (line: Omit<CartLine, "key" | "qty">, qty?: number) => void;
   setQty: (key: string, qty: number) => void;
   increment: (key: string) => void;
@@ -42,6 +73,8 @@ export const useCartStore = create<CartState>()(
       lines: [],
       issues: [],
       hydrated: false,
+
+      setHydrated: () => set({ hydrated: true }),
 
       add: (line, qty = 1) => {
         const key = lineKey(
@@ -147,9 +180,12 @@ export const useCartStore = create<CartState>()(
     }),
     {
       name: "gks-cart-v1",
+      storage: resilientStorage,
       partialize: (state) => ({ lines: state.lines }),
-      onRehydrateStorage: () => () => {
-        useCartStore.setState({ hydrated: true });
+      // Called with the rehydrated state, including on failure — so the UI
+      // unblocks either way rather than waiting forever on storage.
+      onRehydrateStorage: () => (state) => {
+        state?.setHydrated();
       },
     },
   ),

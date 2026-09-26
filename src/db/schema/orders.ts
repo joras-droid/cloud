@@ -66,8 +66,12 @@ export const orders = pgTable(
       .references(() => deliveryZones.id),
     addressLine: text("address_line").notNull(),
     landmark: text("landmark"),
+    /** Optional Google Maps (or similar) link the customer pasted. */
+    mapUrl: text("map_url"),
     lat: text("lat"),
     lng: text("lng"),
+    /** Kitchen calls to confirm. Always true for COD; prepay can opt out. */
+    callRequested: boolean("call_requested").notNull().default(true),
     /** Locale the order was placed in, so notifications match the customer. */
     locale: locale("locale").notNull().default("en"),
     subtotal: integer("subtotal").notNull(),

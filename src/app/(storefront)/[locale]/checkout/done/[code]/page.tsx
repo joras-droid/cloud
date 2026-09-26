@@ -36,6 +36,17 @@ export default async function CheckoutDonePage({
   const t = await getTranslations("checkout");
   const tCart = await getTranslations("cart");
   const isCod = order.paymentMethod === "cod";
+  const deliveryWhenKey =
+    (
+      [
+        "deliveryWhenAsap",
+        "deliveryWhenAfter1",
+        "deliveryWhenAfter2",
+        "deliveryWhenAfter3",
+        "deliveryWhenAfter4",
+        "deliveryWhenAfter5",
+      ] as const
+    )[order.deliveryAfterHours] ?? "deliveryWhenAsap";
 
   return (
     <div className="mx-auto max-w-2xl px-4 py-12">
@@ -71,6 +82,10 @@ export default async function CheckoutDonePage({
           <div className="flex justify-between gap-4">
             <dt className="text-ink-soft">{t("address")}</dt>
             <dd className="text-right">{order.addressLine}</dd>
+          </div>
+          <div className="flex justify-between gap-4">
+            <dt className="text-ink-soft">{t("deliveryWhen")}</dt>
+            <dd className="text-right">{t(deliveryWhenKey)}</dd>
           </div>
           <div className="flex justify-between">
             <dt className="text-ink-soft">{tCart("total")}</dt>

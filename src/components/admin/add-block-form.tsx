@@ -10,7 +10,7 @@ const STARTERS: Record<BlockKind, unknown> = {
   rich_text: { bodyEn: "Write the story here." },
   quote: { bodyEn: "A customer or chef quote." },
   stat_strip: {
-    stats: [{ value: "12", labelEn: "Local farms", labelNe: "स्थानीय किसान" }],
+    stats: [{ value: "100%", labelEn: "Vegetarian", labelNe: "शाकाहारी" }],
   },
   ingredient_story: {
     nameEn: "Ingredient",

@@ -72,6 +72,8 @@ export const orders = pgTable(
     lng: text("lng"),
     /** Kitchen calls to confirm. Always true for COD; prepay can opt out. */
     callRequested: boolean("call_requested").notNull().default(true),
+    /** 0 = ASAP; 1–5 = deliver that many hours after the order is placed. */
+    deliveryAfterHours: smallint("delivery_after_hours").notNull().default(0),
     /** Locale the order was placed in, so notifications match the customer. */
     locale: locale("locale").notNull().default("en"),
     subtotal: integer("subtotal").notNull(),

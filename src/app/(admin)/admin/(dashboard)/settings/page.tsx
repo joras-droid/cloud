@@ -1,3 +1,4 @@
+import { PrepayEditor } from "@/components/admin/prepay-editor";
 import { requireAdmin } from "@/lib/auth/session";
 import {
   getAdminSettingsRow,
@@ -30,7 +31,7 @@ export default async function SettingsPage() {
       <header className="mb-6">
         <h1 className="font-display text-2xl font-bold text-ink">Settings</h1>
         <p className="mt-1 text-ink-soft">
-          Hours, delivery areas, COD rules, and the QR the customer scans.
+          Hours, delivery areas, and whether customers pay ahead or in cash.
         </p>
       </header>
 
@@ -96,6 +97,12 @@ export default async function SettingsPage() {
           <HoursEditor hours={hours} />
         </section>
 
+        <PrepayEditor
+          key={`${settings.prepayEnabled}:${JSON.stringify(qr)}`}
+          enabled={settings.prepayEnabled}
+          methods={qr}
+        />
+
         <section className="grid gap-3 rounded-card border border-line bg-paper p-5">
           <h2 className="font-display text-lg font-bold">Cash on delivery</h2>
           <label className="flex items-center gap-2 text-sm font-medium">
@@ -117,19 +124,6 @@ export default async function SettingsPage() {
               className="mt-1.5"
             />
           </div>
-        </section>
-
-        <section className="grid gap-3 rounded-card border border-line bg-paper p-5">
-          <h2 className="font-display text-lg font-bold">Payment QR</h2>
-          <p className="text-sm text-ink-soft">
-            Edit as JSON for now: method, accountName, image URL.
-          </p>
-          <textarea
-            name="qrImages"
-            rows={8}
-            defaultValue={JSON.stringify(qr, null, 2)}
-            className="focus-ring w-full rounded-xl border border-line p-3 font-mono text-sm"
-          />
         </section>
 
         <Button type="submit" size="lg">

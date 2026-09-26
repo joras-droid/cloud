@@ -7,6 +7,7 @@ import {
   ORDER_STATUS_OPTIONS,
   OrderStatusPill,
 } from "@/components/admin/order-status-pill";
+import { deliveryAfterHoursLabel } from "@/lib/checkout/delivery-timing";
 import { formatPaisa } from "@/lib/money";
 import { cn } from "@/lib/utils";
 
@@ -47,6 +48,7 @@ export type BoardOrder = {
   customerName: string;
   zone: string;
   itemCount: number;
+  deliveryAfterHours: number;
 };
 
 const LABELS = new Map(ORDER_STATUS_OPTIONS.map((option) => [option.value, option.label]));
@@ -87,6 +89,9 @@ function OrderCard({ order, delay }: { order: BoardOrder; delay: number }) {
       <p className="mt-2 truncate text-base text-ink lg:text-sm">{order.customerName}</p>
       <p className="truncate text-sm text-ink-soft">
         {order.zone} · {order.itemCount} items
+        {order.deliveryAfterHours > 0
+          ? ` · ${deliveryAfterHoursLabel(order.deliveryAfterHours)}`
+          : ""}
       </p>
       <div className="mt-3 flex items-center gap-2">
         <OrderStatusPill status={order.status} />

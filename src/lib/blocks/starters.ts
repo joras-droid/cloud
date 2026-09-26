@@ -48,7 +48,7 @@ export function emptyBlockPayload(
       return { itemIds: (extras?.itemIds ?? []).slice(0, 4) };
     case "stat_strip":
       return {
-        stats: [{ value: "12", labelEn: "Local farms", labelNe: "स्थानीय किसान" }],
+        stats: [{ value: "100%", labelEn: "Vegetarian", labelNe: "शाकाहारी" }],
       };
     case "quote":
       return {

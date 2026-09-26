@@ -13,6 +13,7 @@ export type AdminOrderDetail = {
   landmark: string | null;
   mapUrl: string | null;
   callRequested: boolean;
+  deliveryAfterHours: number;
   notes: string | null;
   locale: "en" | "ne";
   subtotal: number;
@@ -111,6 +112,7 @@ export async function getAdminOrder(
     landmark: row.order.landmark,
     mapUrl: row.order.mapUrl,
     callRequested: row.order.callRequested,
+    deliveryAfterHours: row.order.deliveryAfterHours,
     notes: row.order.notes,
     locale: row.order.locale,
     subtotal: row.order.subtotal,

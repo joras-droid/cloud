@@ -99,6 +99,7 @@ export type AdminOrderRow = {
   customerPhone: string;
   zone: string;
   placedAt: Date;
+  deliveryAfterHours: number;
   itemCount: number;
 };
 
@@ -114,6 +115,7 @@ export async function getOrderBoard(): Promise<AdminOrderRow[]> {
       customerPhone: s.customers.phone,
       zone: s.deliveryZones.nameEn,
       placedAt: s.orders.placedAt,
+      deliveryAfterHours: s.orders.deliveryAfterHours,
       itemCount: sql<number>`(
         select coalesce(sum(${s.orderItems.qty}), 0)
         from ${s.orderItems}

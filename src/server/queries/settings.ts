@@ -2,13 +2,25 @@ import { asc, eq } from "drizzle-orm";
 import { unstable_cache } from "next/cache";
 import { db } from "@/db";
 import * as s from "@/db/schema";
+import { isQrMethod, type QrMethodName } from "@/lib/payment-methods";
 
 export type QrMethod = {
-  method: "fonepay" | "esewa" | "khalti" | "bank";
+  method: QrMethodName;
   accountName: string;
   image: string;
   note?: string;
 };
+
+/** Checkout can offer QR pay only when the switch is on and a scannable code exists. */
+export function prepayReady(
+  enabled: boolean,
+  images: { method: string; image?: string }[],
+): boolean {
+  return (
+    enabled &&
+    images.some((qr) => isQrMethod(qr.method) && Boolean(qr.image?.trim()))
+  );
+}
 
 export type OpenHour = {
   day: number;
@@ -23,6 +35,7 @@ const FALLBACK = {
   minOrder: 0,
   codEnabled: false,
   codMax: 0,
+  prepayEnabled: false,
   qrImages: [] as QrMethod[],
   bannerEn: null as string | null,
   bannerNe: null as string | null,
@@ -38,6 +51,7 @@ async function loadSettings() {
     minOrder: row.minOrder,
     codEnabled: row.codEnabled,
     codMax: row.codMax,
+    prepayEnabled: row.prepayEnabled,
     qrImages: row.qrImages as QrMethod[],
     bannerEn: row.bannerEn,
     bannerNe: row.bannerNe,

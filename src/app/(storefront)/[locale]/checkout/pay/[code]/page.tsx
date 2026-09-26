@@ -5,6 +5,7 @@ import { getTranslations, setRequestLocale } from "next-intl/server";
 import { PaymentProofForm } from "@/components/checkout/payment-proof-form";
 import { getOrderByCode } from "@/server/queries/checkout";
 import { getStoreSettings } from "@/server/queries/settings";
+import { qrMethodLabel } from "@/lib/payment-methods";
 import { formatPaisa } from "@/lib/money";
 import type { Locale } from "@/i18n/routing";
 
@@ -65,12 +66,12 @@ export default async function CheckoutPayPage({
               key={qr.method}
               className="overflow-hidden rounded-card border border-line bg-paper p-4"
             >
-              <p className="mb-2 text-sm font-semibold capitalize">{qr.method}</p>
+              <p className="mb-2 text-sm font-semibold">{qrMethodLabel(qr.method)}</p>
               {qr.image ? (
                 <div className="relative aspect-square overflow-hidden rounded-xl bg-line">
                   <Image
                     src={qr.image}
-                    alt={`${qr.method} QR`}
+                    alt={`${qrMethodLabel(qr.method)} QR`}
                     fill
                     unoptimized
                     className="object-contain"
@@ -79,6 +80,9 @@ export default async function CheckoutPayPage({
                 </div>
               ) : null}
               <p className="mt-2 text-sm text-ink-soft">{qr.accountName}</p>
+              {qr.note ? (
+                <p className="mt-1 text-sm text-ink-soft">{qr.note}</p>
+              ) : null}
             </li>
           ))}
         </ul>

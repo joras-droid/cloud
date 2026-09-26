@@ -8,6 +8,7 @@ import { PaymentProofForm } from "@/components/checkout/payment-proof-form";
 import { MarkDelivered } from "@/components/track/mark-delivered";
 import { RefreshStatus } from "@/components/track/refresh-status";
 import { clearTrack } from "@/server/actions/track";
+import { qrMethodLabel } from "@/lib/payment-methods";
 import { formatPaisa } from "@/lib/money";
 import { CUSTOMER_CANCEL_PHONE, CUSTOMER_CANCEL_REASON } from "@/lib/order-cancel";
 import { telHref } from "@/lib/phone";
@@ -292,13 +293,13 @@ export async function TrackedOrders({
                           className="overflow-hidden rounded-xl border border-line bg-cream/40 p-3"
                         >
                           <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-ink-faint">
-                            {qr.method}
+                            {qrMethodLabel(qr.method)}
                           </p>
                           {qr.image ? (
                             <div className="relative aspect-square overflow-hidden rounded-lg bg-paper">
                               <Image
                                 src={qr.image}
-                                alt={`${qr.method} QR`}
+                                alt={`${qrMethodLabel(qr.method)} QR`}
                                 fill
                                 unoptimized
                                 className="object-contain"
@@ -307,6 +308,9 @@ export async function TrackedOrders({
                             </div>
                           ) : null}
                           <p className="mt-2 text-sm text-ink-soft">{qr.accountName}</p>
+                          {qr.note ? (
+                            <p className="mt-1 text-sm text-ink-soft">{qr.note}</p>
+                          ) : null}
                         </li>
                       ))}
                     </ul>

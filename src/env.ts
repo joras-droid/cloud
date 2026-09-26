@@ -19,6 +19,12 @@ const serverSchema = z.object({
   R2_BUCKET: z.string().default("gharkoswad"),
   R2_PUBLIC_BASE_URL: z.url().optional(),
 
+  AWS_REGION: z.string().optional(),
+  AWS_ACCESS_KEY_ID: z.string().optional(),
+  AWS_SECRET_ACCESS_KEY: z.string().optional(),
+  AWS_S3_BUCKET_NAME: z.string().optional(),
+  AWS_S3_PUBLIC_BASE_URL: z.url().optional(),
+
   SPARROW_SMS_TOKEN: z.string().optional(),
   SPARROW_SMS_FROM: z.string().default("GharKoSwad"),
 
@@ -48,8 +54,14 @@ function loadEnv(): ServerEnv {
 
 export const env = loadEnv();
 
-/** SMS and R2 fall back to console/local stubs until credentials exist. */
+/** SMS and object storage fall back to local stubs until credentials exist. */
 export const hasR2 = Boolean(
   env.R2_ACCOUNT_ID && env.R2_ACCESS_KEY_ID && env.R2_SECRET_ACCESS_KEY,
+);
+export const hasS3 = Boolean(
+  env.AWS_REGION &&
+    env.AWS_ACCESS_KEY_ID &&
+    env.AWS_SECRET_ACCESS_KEY &&
+    env.AWS_S3_BUCKET_NAME,
 );
 export const hasSms = Boolean(env.SPARROW_SMS_TOKEN);

@@ -43,6 +43,13 @@
       "when": 1790446039710,
       "tag": "0005_prepay_enabled",
       "breakpoints": true
+    },
+    {
+      "idx": 6,
+      "version": "7",
+      "when": 1790450000000,
+      "tag": "0006_delivery_after_hours",
+      "breakpoints": true
     }
   ]
 }

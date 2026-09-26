@@ -13,7 +13,12 @@ import { createTrackSession } from "@/lib/track/session";
 import { publishOrders } from "@/server/cache";
 import { optional, text } from "@/server/form";
 import { getCheckoutCities } from "@/server/queries/checkout";
-import { getStoreSettings } from "@/server/queries/settings";
+import {
+  deliveryAfterHoursLabel,
+  parseDeliveryAfterHours,
+} from "@/lib/checkout/delivery-timing";
+import { isQrMethod } from "@/lib/payment-methods";
+import { getStoreSettings, prepayReady } from "@/server/queries/settings";
 import type { Locale } from "@/i18n/routing";
 
 export type CheckoutState = { error?: string };
@@ -66,9 +71,19 @@ export async function placeOrder(
     return { error: "Pick Kathmandu or Lalitpur." };
   }
 
-  const payKind = text(form, "payment") === "cod" ? "cod" : "prepay";
+  const paymentChoice = text(form, "payment");
+  const payKind =
+    paymentChoice === "cod" ? "cod" : paymentChoice === "prepay" ? "prepay" : null;
+  if (!payKind) return { error: "Choose a payment method." };
   const callRequested =
     payKind === "cod" ? true : text(form, "callRequested") !== "no";
+
+  const deliveryAfterHours = parseDeliveryAfterHours(
+    text(form, "deliveryAfterHours") || "0",
+  );
+  if (deliveryAfterHours === null) {
+    return { error: "Choose when you want the delivery." };
+  }
 
   let lines: z.infer<typeof cartLineSchema>[];
   try {
@@ -150,6 +165,10 @@ export async function placeOrder(
   const deliveryFee = zone.fee;
   const total = subtotal + deliveryFee;
 
+  if (payKind === "prepay" && !prepayReady(settings.prepayEnabled, settings.qrImages)) {
+    return { error: "Prepayment is not available right now." };
+  }
+
   if (payKind === "cod") {
     if (!settings.codEnabled || !zone.codAllowed) {
       return { error: "Cash on delivery is not available for this city." };
@@ -161,7 +180,8 @@ export async function placeOrder(
     }
   }
 
-  const method = payKind === "cod" ? "cod" : "fonepay";
+  const qrMethod = settings.qrImages.find((qr) => isQrMethod(qr.method))?.method;
+  const method = payKind === "cod" ? "cod" : (qrMethod ?? "fonepay");
   const status = payKind === "cod" ? "pending_confirmation" : "pending_payment";
 
   const [existingCustomer] = await db
@@ -202,6 +222,7 @@ export async function placeOrder(
             addressLine,
             mapUrl,
             callRequested,
+            deliveryAfterHours,
             locale,
             subtotal,
             deliveryFee,
@@ -235,15 +256,18 @@ export async function placeOrder(
           status: "pending",
         });
 
+        const deliveryNote = deliveryAfterHoursLabel(deliveryAfterHours);
+        const paymentNote =
+          payKind === "cod"
+            ? "COD — kitchen will call to confirm"
+            : callRequested
+              ? "Prepay — customer asked to be called"
+              : "Prepay — customer asked not to be called";
+
         await tx.insert(s.orderEvents).values({
           orderId: order.id,
           toStatus: status,
-          note:
-            payKind === "cod"
-              ? "COD — kitchen will call to confirm"
-              : callRequested
-                ? "Prepay — customer asked to be called"
-                : "Prepay — customer asked not to be called",
+          note: `${paymentNote}. Delivery: ${deliveryNote}.`,
         });
 
         return order;

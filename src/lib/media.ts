@@ -1,9 +1,9 @@
-import { env } from "@/env";
+import { env, hasS3 } from "@/env";
+import { isObjectMenuKey, s3PublicBaseUrl } from "@/lib/media/storage";
 
 /**
  * Seed and placeholder rows store a full URL in `r2_key`; real uploads store a
- * bucket key. Resolving both here means the rest of the app never branches on
- * whether an image is a placeholder.
+ * bucket key or a site path. Resolving all shapes here keeps callers simple.
  */
 export function mediaUrl(r2Key: string | null | undefined): string | null {
   if (!r2Key) return null;
@@ -14,6 +14,11 @@ export function mediaUrl(r2Key: string | null | undefined): string | null {
   ) {
     return r2Key;
   }
-  if (!env.R2_PUBLIC_BASE_URL) return null;
-  return `${env.R2_PUBLIC_BASE_URL.replace(/\/$/, "")}/${r2Key}`;
+  if (hasS3 && isObjectMenuKey(r2Key)) {
+    return `${s3PublicBaseUrl()}/${r2Key}`;
+  }
+  if (env.R2_PUBLIC_BASE_URL) {
+    return `${env.R2_PUBLIC_BASE_URL.replace(/\/$/, "")}/${r2Key}`;
+  }
+  return null;
 }

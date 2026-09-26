@@ -1,7 +1,7 @@
-"use server";
+import "server-only";
 
 import { createHash } from "node:crypto";
-import { mkdir, unlink, writeFile } from "node:fs/promises";
+import { mkdir, unlink } from "node:fs/promises";
 import path from "node:path";
 import { revalidatePath } from "next/cache";
 import { after } from "next/server";
@@ -10,8 +10,15 @@ import { nanoid } from "nanoid";
 import { z } from "zod";
 import { db } from "@/db";
 import * as s from "@/db/schema";
+import { hasS3 } from "@/env";
 import { requireAdmin } from "@/lib/auth/session";
 import { MENU_MEDIA_MAX_BYTES } from "@/lib/media/limits";
+import {
+  deleteMenuObject,
+  isManagedMenuKey,
+  menuObjectKey,
+  putMenuBytes,
+} from "@/lib/media/storage";
 import { publishMenu } from "@/server/cache";
 import { text } from "@/server/form";
 
@@ -82,10 +89,25 @@ export async function uploadMenuMedia(form: FormData): Promise<MediaActionState>
 
   const bytes = Buffer.from(await file.arrayBuffer());
   const filename = `${nanoid()}.${classified.ext}`;
-  const key = `/uploads/menu/${itemId}/${filename}`;
-  const dir = path.join(process.cwd(), "public", "uploads", "menu", itemId);
-  await mkdir(dir, { recursive: true });
-  await writeFile(path.join(dir, filename), bytes);
+  const mime =
+    file.type || (classified.kind === "video" ? "video/mp4" : "image/jpeg");
+  const key = hasS3
+    ? menuObjectKey(itemId, filename)
+    : `/uploads/menu/${itemId}/${filename}`;
+
+  let localPath: string | null = null;
+  if (!hasS3) {
+    localPath = path.join(process.cwd(), "public", key.slice(1));
+    await mkdir(path.dirname(localPath), { recursive: true });
+  }
+
+  try {
+    await putMenuBytes(key, bytes, mime);
+  } catch (err) {
+    if (localPath) await unlink(localPath).catch(() => {});
+    console.error("menu media upload failed", err);
+    return { error: "Upload failed. Check S3 credentials and bucket access." };
+  }
 
   let mediaId = "";
   try {
@@ -121,7 +143,7 @@ export async function uploadMenuMedia(form: FormData): Promise<MediaActionState>
         .values({
           kind: classified.kind,
           r2Key: key,
-          mime: file.type || (classified.kind === "video" ? "video/mp4" : "image/jpeg"),
+          mime,
           bytes: bytes.length,
           altEn: item.nameEn,
           altNe: item.nameNe,
@@ -147,7 +169,7 @@ export async function uploadMenuMedia(form: FormData): Promise<MediaActionState>
       return created.id;
     });
   } catch (err) {
-    await unlink(path.join(dir, filename)).catch(() => {});
+    await deleteMenuObject(key).catch(() => {});
     throw err;
   }
 
@@ -239,9 +261,8 @@ export async function removeMenuMedia(form: FormData) {
     .where(eq(s.menuItems.heroMediaId, mediaId))
     .limit(1);
 
-  if (!stillLinked && !stillHero && media?.r2Key.startsWith("/uploads/menu/")) {
-    const relative = media.r2Key.replace(/^\/+/, "");
-    await unlink(path.join(process.cwd(), "public", relative)).catch(() => {});
+  if (!stillLinked && !stillHero && media && isManagedMenuKey(media.r2Key)) {
+    await deleteMenuObject(media.r2Key);
     await db.delete(s.media).where(eq(s.media.id, mediaId));
   }
 

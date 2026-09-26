@@ -1,16 +1,22 @@
 "use server";
 
+import { mkdir, unlink, writeFile } from "node:fs/promises";
+import path from "node:path";
 import { asc, eq } from "drizzle-orm";
+import { nanoid } from "nanoid";
 import { redirect } from "next/navigation";
+import sharp from "sharp";
 import { z } from "zod";
 import { db } from "@/db";
 import * as s from "@/db/schema";
 import { parseBlock } from "@/lib/blocks/schemas";
+import { isQrMethod, type QrMethodName } from "@/lib/payment-methods";
 import { slugify } from "@/lib/utils";
 import { requireAdmin } from "@/lib/auth/session";
 import { writeAudit } from "@/server/audit";
 import { publishSections, publishSettings } from "@/server/cache";
 import { flag, optional, rupeesField, text } from "@/server/form";
+import type { QrMethod } from "@/server/queries/settings";
 
 function asRecord(value: unknown): Record<string, unknown> {
   return value && typeof value === "object"
@@ -251,29 +257,169 @@ export async function setKitchenOpen(form: FormData) {
   await publishSettings();
 }
 
+const QR_METHODS_LIMIT = 4;
+const QR_IMAGE_MAX_BYTES = 8 * 1024 * 1024;
+const QR_IMAGE_FORMATS = new Set(["jpeg", "png", "webp", "heif", "avif"]);
+
+function storedQrPath(url: string): string | null {
+  if (!url.startsWith("/uploads/qr/") || url.includes("..") || url.includes("\\")) {
+    return null;
+  }
+  const root = path.resolve(process.cwd(), "public", "uploads", "qr");
+  const full = path.resolve(process.cwd(), "public", url.slice(1));
+  if (full !== root && !full.startsWith(root + path.sep)) return null;
+  return full;
+}
+
+async function removeStoredQr(url: string) {
+  const full = storedQrPath(url);
+  if (!full) return;
+  await unlink(full).catch(() => {});
+}
+
+function keptImageUrl(value: string): string {
+  if (!value || value.includes("..") || value.includes("\\")) return "";
+  if (value.startsWith("/")) return value;
+  try {
+    const url = new URL(value);
+    if (url.protocol === "https:" || url.protocol === "http:") return value;
+  } catch {
+    return "";
+  }
+  return "";
+}
+
+async function writeQrFile(file: File): Promise<string> {
+  if (file.size > QR_IMAGE_MAX_BYTES) {
+    throw new Error("QR images must be 8 MB or smaller.");
+  }
+  const bytes = Buffer.from(await file.arrayBuffer());
+  const meta = await sharp(bytes, { failOn: "none" }).metadata();
+  if (!meta.format || !QR_IMAGE_FORMATS.has(meta.format)) {
+    throw new Error("Use a JPG, PNG, or WebP image for the QR.");
+  }
+  const out = await sharp(bytes, { failOn: "none" })
+    .rotate()
+    .resize({ width: 1200, height: 1200, fit: "inside", withoutEnlargement: true })
+    .webp({ quality: 90 })
+    .toBuffer();
+  const filename = `${nanoid()}.webp`;
+  const dir = path.join(process.cwd(), "public", "uploads", "qr");
+  await mkdir(dir, { recursive: true });
+  await writeFile(path.join(dir, filename), out);
+  return `/uploads/qr/${filename}`;
+}
+
+async function readQrMethods(form: FormData): Promise<QrMethod[]> {
+  const count = Math.min(QR_METHODS_LIMIT, Number(text(form, "qrCount")) || 0);
+  const pending: {
+    method: QrMethodName;
+    accountName: string;
+    note: string | null;
+    image: string;
+    file: File | null;
+  }[] = [];
+  const seen = new Set<string>();
+
+  for (let i = 0; i < count; i += 1) {
+    const methodRaw = text(form, `qr.${i}.method`);
+    if (!isQrMethod(methodRaw)) throw new Error("Choose a payment app.");
+    if (seen.has(methodRaw)) {
+      throw new Error("Each payment app can only be listed once.");
+    }
+    seen.add(methodRaw);
+
+    const accountName = text(form, `qr.${i}.accountName`);
+    if (!accountName) throw new Error("Each payment method needs an account name.");
+    if (accountName.length > 80) throw new Error("Account name is too long.");
+
+    const note = optional(form, `qr.${i}.note`);
+    if (note && note.length > 160) throw new Error("Note is too long.");
+
+    const uploaded = form.get(`qr.${i}.file`);
+    const file = uploaded instanceof File && uploaded.size > 0 ? uploaded : null;
+    const image = keptImageUrl(text(form, `qr.${i}.image`));
+    if (!file && !image) throw new Error("Each payment method needs a QR image.");
+
+    pending.push({ method: methodRaw, accountName, note, image, file });
+  }
+
+  if (pending.length === 0) {
+    throw new Error(
+      "Add a payment method and upload its QR before turning prepayment on.",
+    );
+  }
+
+  const written: string[] = [];
+  try {
+    const methods: QrMethod[] = [];
+    for (const row of pending) {
+      let image = row.image;
+      if (row.file) {
+        image = await writeQrFile(row.file);
+        written.push(image);
+      }
+      methods.push({
+        method: row.method,
+        accountName: row.accountName,
+        image,
+        ...(row.note ? { note: row.note } : {}),
+      });
+    }
+    return methods;
+  } catch (err) {
+    await Promise.all(written.map((url) => removeStoredQr(url)));
+    throw err;
+  }
+}
+
 export async function saveSettings(form: FormData) {
   const session = await requireAdmin("owner");
   const [existing] = await db.select().from(s.storeSettings).limit(1);
   if (!existing) throw new Error("Settings row missing — re-run the seed");
 
   const hours = JSON.parse(text(form, "openHours") || "[]");
-  const qrImages = JSON.parse(text(form, "qrImages") || "[]");
+  const prepayEnabled = flag(form, "prepayEnabled");
+  const previous = (existing.qrImages as QrMethod[]) ?? [];
+  const qrImages = prepayEnabled ? await readQrMethods(form) : previous;
 
-  await db
-    .update(s.storeSettings)
-    .set({
-      isAcceptingOrders: flag(form, "isAcceptingOrders"),
-      openHours: hours,
-      minOrder: rupeesField(form, "minOrder"),
-      codEnabled: flag(form, "codEnabled"),
-      codMax: rupeesField(form, "codMax"),
-      qrImages,
-      bannerEn: optional(form, "bannerEn"),
-      bannerNe: optional(form, "bannerNe"),
-      supportPhone: optional(form, "supportPhone"),
-      updatedAt: new Date(),
-    })
-    .where(eq(s.storeSettings.id, existing.id));
+  try {
+    await db
+      .update(s.storeSettings)
+      .set({
+        isAcceptingOrders: flag(form, "isAcceptingOrders"),
+        openHours: hours,
+        minOrder: rupeesField(form, "minOrder"),
+        codEnabled: flag(form, "codEnabled"),
+        codMax: rupeesField(form, "codMax"),
+        prepayEnabled,
+        qrImages,
+        bannerEn: optional(form, "bannerEn"),
+        bannerNe: optional(form, "bannerNe"),
+        supportPhone: optional(form, "supportPhone"),
+        updatedAt: new Date(),
+      })
+      .where(eq(s.storeSettings.id, existing.id));
+  } catch (err) {
+    const kept = new Set(previous.map((qr) => qr.image));
+    await Promise.all(
+      qrImages
+        .map((qr) => qr.image)
+        .filter((url) => !kept.has(url))
+        .map((url) => removeStoredQr(url)),
+    );
+    throw err;
+  }
+
+  if (prepayEnabled) {
+    const kept = new Set(qrImages.map((qr) => qr.image));
+    await Promise.all(
+      previous
+        .map((qr) => qr.image)
+        .filter((url) => url.startsWith("/uploads/qr/") && !kept.has(url))
+        .map((url) => removeStoredQr(url)),
+    );
+  }
 
   await writeAudit({
     actorId: session.userId,

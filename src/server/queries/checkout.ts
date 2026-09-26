@@ -100,6 +100,7 @@ export async function getOrderByCode(code: string) {
     addressLine: row.order.addressLine,
     mapUrl: row.order.mapUrl,
     callRequested: row.order.callRequested,
+    deliveryAfterHours: row.order.deliveryAfterHours,
     locale: row.order.locale,
     subtotal: row.order.subtotal,
     deliveryFee: row.order.deliveryFee,

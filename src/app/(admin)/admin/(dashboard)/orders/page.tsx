@@ -35,6 +35,7 @@ export default async function OrdersPage() {
             customerName: order.customerName,
             zone: order.zone,
             itemCount: order.itemCount,
+            deliveryAfterHours: order.deliveryAfterHours,
           }))}
         />
       )}

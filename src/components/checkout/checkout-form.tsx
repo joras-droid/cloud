@@ -33,6 +33,7 @@ export function CheckoutForm({
   cities,
   locale,
   minOrder,
+  prepayEnabled,
   codEnabled,
   codMax,
   closed,
@@ -40,6 +41,7 @@ export function CheckoutForm({
   cities: CheckoutCity[];
   locale: Locale;
   minOrder: number;
+  prepayEnabled: boolean;
   codEnabled: boolean;
   codMax: number;
   closed: boolean;
@@ -54,7 +56,9 @@ export function CheckoutForm({
   const kathmandu =
     cities.find((c) => c.nameEn === "Kathmandu") ?? cities[0];
   const [zoneId, setZoneId] = useState(kathmandu?.id ?? "");
-  const [payment, setPayment] = useState<"prepay" | "cod">("prepay");
+  const [payment, setPayment] = useState<"prepay" | "cod">(
+    prepayEnabled ? "prepay" : "cod",
+  );
   const [callRequested, setCallRequested] = useState<"yes" | "no">("yes");
 
   const zone = cities.find((c) => c.id === zoneId) ?? kathmandu;
@@ -63,6 +67,15 @@ export function CheckoutForm({
   const belowMinimum = subtotal < minOrder;
   const codAllowed =
     codEnabled && (zone?.codAllowed ?? true) && total <= codMax;
+  const method: "prepay" | "cod" =
+    payment === "cod" && codAllowed
+      ? "cod"
+      : payment === "prepay" && prepayEnabled
+        ? "prepay"
+        : prepayEnabled
+          ? "prepay"
+          : "cod";
+  const noPaymentMethod = !prepayEnabled && !codAllowed;
 
   const cartPayload = useMemo(
     () =>
@@ -170,60 +183,92 @@ export function CheckoutForm({
             className="mt-1.5"
           />
         </div>
+        <div>
+          <Label htmlFor="deliveryAfterHours">{t("deliveryWhen")}</Label>
+          <Select
+            id="deliveryAfterHours"
+            name="deliveryAfterHours"
+            required
+            defaultValue="0"
+            className="mt-1.5"
+          >
+            <option value="0">{t("deliveryWhenAsap")}</option>
+            <option value="1">{t("deliveryWhenAfter1")}</option>
+            <option value="2">{t("deliveryWhenAfter2")}</option>
+            <option value="3">{t("deliveryWhenAfter3")}</option>
+            <option value="4">{t("deliveryWhenAfter4")}</option>
+            <option value="5">{t("deliveryWhenAfter5")}</option>
+          </Select>
+          <p className="mt-1.5 text-xs text-ink-faint">{t("deliveryWhenHint")}</p>
+        </div>
       </section>
 
       <section className="grid gap-4 rounded-card border border-line bg-paper p-5">
         <h2 className="font-display text-lg font-bold">{t("payment")}</h2>
 
-        <label
-          className={cn(
-            "flex cursor-pointer gap-3 rounded-xl border p-4",
-            payment === "prepay"
-              ? "border-brand-500 bg-brand-50"
-              : "border-line",
-          )}
-        >
-          <input
-            type="radio"
-            name="payment"
-            value="prepay"
-            checked={payment === "prepay"}
-            onChange={() => setPayment("prepay")}
-            className="mt-1 size-4 accent-brand-600"
-          />
-          <span>
-            <span className="block font-medium">{t("payByQr")}</span>
-            <span className="mt-0.5 block text-sm text-ink-soft">
-              {t("payByQrHint")}
+        {prepayEnabled ? (
+          <label
+            className={cn(
+              "flex cursor-pointer gap-3 rounded-xl border p-4",
+              method === "prepay"
+                ? "border-brand-500 bg-brand-50"
+                : "border-line",
+            )}
+          >
+            <input
+              type="radio"
+              name="payment"
+              value="prepay"
+              checked={method === "prepay"}
+              onChange={() => setPayment("prepay")}
+              className="mt-1 size-4 accent-brand-600"
+            />
+            <span>
+              <span className="block font-medium">{t("payByQr")}</span>
+              <span className="mt-0.5 block text-sm text-ink-soft">
+                {t("payByQrHint")}
+              </span>
             </span>
-          </span>
-        </label>
+          </label>
+        ) : null}
 
-        <label
-          className={cn(
-            "flex cursor-pointer gap-3 rounded-xl border p-4",
-            payment === "cod" ? "border-brand-500 bg-brand-50" : "border-line",
-            !codAllowed && "opacity-50",
-          )}
-        >
-          <input
-            type="radio"
-            name="payment"
-            value="cod"
-            checked={payment === "cod"}
-            disabled={!codAllowed}
-            onChange={() => setPayment("cod")}
-            className="mt-1 size-4 accent-brand-600"
-          />
-          <span>
-            <span className="block font-medium">{t("payCod")}</span>
-            <span className="mt-0.5 block text-sm text-ink-soft">
-              {t("payCodHint")}
+        {codEnabled ? (
+          <label
+            className={cn(
+              "flex cursor-pointer gap-3 rounded-xl border p-4",
+              method === "cod" ? "border-brand-500 bg-brand-50" : "border-line",
+              !codAllowed && "opacity-50",
+            )}
+          >
+            <input
+              type="radio"
+              name="payment"
+              value="cod"
+              checked={method === "cod"}
+              disabled={!codAllowed}
+              onChange={() => setPayment("cod")}
+              className="mt-1 size-4 accent-brand-600"
+            />
+            <span>
+              <span className="block font-medium">{t("payCod")}</span>
+              <span className="mt-0.5 block text-sm text-ink-soft">
+                {codAllowed
+                  ? t("payCodHint")
+                  : total > codMax
+                    ? t("codOverLimit", { amount: formatPaisa(codMax, locale) })
+                    : t("codUnavailable")}
+              </span>
             </span>
-          </span>
-        </label>
+          </label>
+        ) : null}
 
-        {payment === "prepay" ? (
+        {noPaymentMethod ? (
+          <p className="rounded-xl bg-chilli-soft p-4 text-sm text-chilli">
+            {t("noPayment")}
+          </p>
+        ) : null}
+
+        {method === "prepay" && prepayEnabled ? (
           <fieldset className="grid gap-2 rounded-xl bg-cream/60 p-4">
             <legend className="px-1 text-sm font-semibold">{t("callPref")}</legend>
             <label className="flex items-center gap-2 text-sm">
@@ -247,11 +292,11 @@ export function CheckoutForm({
               {t("dontCallMe")}
             </label>
           </fieldset>
-        ) : (
+        ) : codAllowed ? (
           <p className="rounded-xl bg-gold-soft p-4 text-sm text-ink">
             {t("codCallNotice")}
           </p>
-        )}
+        ) : null}
       </section>
 
       <section className="grid gap-2 rounded-card border border-line bg-paper p-5">
@@ -276,7 +321,10 @@ export function CheckoutForm({
 
       <FieldError>{state.error}</FieldError>
 
-      <Submit label={t("placeOrder")} disabled={closed || belowMinimum} />
+      <Submit
+        label={t("placeOrder")}
+        disabled={closed || belowMinimum || noPaymentMethod}
+      />
     </form>
   );
 }

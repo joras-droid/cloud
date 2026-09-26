@@ -1,4 +1,4 @@
-import { ArrowRight, Leaf, Timer, Sprout } from "lucide-react";
+import { ArrowRight } from "lucide-react";
 import { getTranslations, setRequestLocale } from "next-intl/server";
 import { Link } from "@/i18n/navigation";
 import { ItemCard } from "@/components/menu/item-card";
@@ -35,12 +35,6 @@ export default async function HomePage({
       <section className="relative overflow-hidden border-b border-line bg-brand-50/70">
         <div className="mx-auto grid max-w-6xl items-center gap-8 px-4 py-12 sm:py-20 lg:grid-cols-2">
           <div>
-            <p className="mb-3 inline-flex items-center gap-1.5 rounded-pill bg-herb-soft px-3 py-1 text-xs font-semibold text-herb">
-              <Sprout className="size-3.5" aria-hidden />
-              {locale === "ne"
-                ? "स्थानीय किसानबाट अर्ग्यानिक"
-                : "Organic, from local farms"}
-            </p>
             <h1 className="font-display text-4xl font-bold leading-[1.1] text-ink sm:text-5xl">
               {t("heroTitle")}
             </h1>
@@ -62,33 +56,6 @@ export default async function HomePage({
                 {locale === "ne" ? "हाम्रो कथा" : "Our story"}
               </Link>
             </div>
-
-            <dl className="mt-10 flex flex-wrap gap-x-8 gap-y-4">
-              {[
-                {
-                  icon: Timer,
-                  value: locale === "ne" ? "२५ मिनेट" : "25 min",
-                  label: locale === "ne" ? "औसत तयारी" : "Average prep",
-                },
-                {
-                  icon: Leaf,
-                  value: "100%",
-                  label:
-                    locale === "ne" ? "ताजा सामग्री" : "Fresh ingredients",
-                },
-              ].map(({ icon: Icon, value, label }) => (
-                <div key={label} className="flex items-center gap-2.5">
-                  <Icon className="size-5 text-brand-600" aria-hidden />
-                  <div>
-                    <dt className="sr-only">{label}</dt>
-                    <dd className="font-display text-lg font-bold leading-none text-ink">
-                      {value}
-                    </dd>
-                    <p className="mt-0.5 text-xs text-ink-soft">{label}</p>
-                  </div>
-                </div>
-              ))}
-            </dl>
           </div>
 
           <HomeReviews reviews={reviews} locale={locale} />

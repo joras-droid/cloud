@@ -20,6 +20,7 @@ import {
   setOrderStatus,
   verifyPayment,
 } from "@/server/actions/orders";
+import { deliveryAfterHoursLabel } from "@/lib/checkout/delivery-timing";
 import { formatPaisa } from "@/lib/money";
 
 export const dynamic = "force-dynamic";
@@ -151,6 +152,9 @@ export default async function OrderDetailPage({
                     </p>
                   ) : null}
                   <p className="text-sm text-ink-soft">{order.zone.nameEn}</p>
+                  <p className="mt-2 text-sm font-medium text-ink">
+                    Deliver: {deliveryAfterHoursLabel(order.deliveryAfterHours)}
+                  </p>
                   {order.mapUrl ? (
                     <p className="mt-1">
                       <a

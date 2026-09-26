@@ -16,6 +16,7 @@ export type TrackedOrder = {
   placedAt: Date;
   addressLine: string;
   landmark: string | null;
+  deliveryAfterHours: number;
   subtotal: number;
   deliveryFee: number;
   discount: number;
@@ -86,6 +87,7 @@ export async function getTrackableOrders(phone: string): Promise<TrackedOrder[]>
     placedAt: row.order.placedAt,
     addressLine: row.order.addressLine,
     landmark: row.order.landmark,
+    deliveryAfterHours: row.order.deliveryAfterHours,
     subtotal: row.order.subtotal,
     deliveryFee: row.order.deliveryFee,
     discount: row.order.discount,

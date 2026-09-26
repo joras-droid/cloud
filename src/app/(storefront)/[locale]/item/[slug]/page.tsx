@@ -73,7 +73,6 @@ export default async function ItemPage({
               alt={pick(locale, item.imageAltEn, item.imageAltNe) || name}
               sizes="(max-width: 640px) 100vw, 50vw"
               priority
-              interactive
             />
           </div>
         ) : null}

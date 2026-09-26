@@ -21,7 +21,9 @@ export const storeSettings = pgTable("store_settings", {
   codEnabled: boolean("cod_enabled").notNull().default(true),
   /** Paisa. Caps the blast radius of a prank COD order. */
   codMax: integer("cod_max").notNull().default(300000),
-  /** [{ method: "fonepay", mediaId, accountName, note }] */
+  /** When off, checkout only offers cash on delivery. QR images stay saved. */
+  prepayEnabled: boolean("prepay_enabled").notNull().default(true),
+  /** [{ method: "fonepay" | "esewa" | "khalti" | "bank", accountName, image, note? }] */
   qrImages: jsonb("qr_images").notNull().default([]),
   bannerEn: text("banner_en"),
   bannerNe: text("banner_ne"),

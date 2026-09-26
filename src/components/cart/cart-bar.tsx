@@ -5,6 +5,7 @@ import { useLocale, useTranslations } from "next-intl";
 import { usePathname } from "@/i18n/navigation";
 import { Link } from "@/i18n/navigation";
 import { useCartCount, useCartStore, useCartSubtotal } from "@/lib/cart/store";
+import { useOverlayOpen } from "@/lib/overlay";
 import { formatPaisa } from "@/lib/money";
 import type { Locale } from "@/i18n/routing";
 
@@ -19,9 +20,15 @@ export function CartBar() {
   const count = useCartCount();
   const subtotal = useCartSubtotal();
   const hydrated = useCartStore((s) => s.hydrated);
+  const overlayOpen = useOverlayOpen();
 
   const hiddenOn = ["/cart", "/checkout", "/checkout/payment", "/track"];
-  if (!hydrated || count === 0 || hiddenOn.some((p) => pathname.startsWith(p)))
+  if (
+    !hydrated ||
+    count === 0 ||
+    overlayOpen ||
+    hiddenOn.some((p) => pathname.startsWith(p))
+  )
     return null;
 
   return (

@@ -5,6 +5,7 @@ import { X } from "lucide-react";
 import { useLocale, useTranslations } from "next-intl";
 import { Button } from "@/components/ui/button";
 import { useCartStore } from "@/lib/cart/store";
+import { setOverlayOpen } from "@/lib/overlay";
 import { formatPaisa } from "@/lib/money";
 import { cn, pick } from "@/lib/utils";
 import type { MenuItem } from "@/server/queries/menu";
@@ -44,10 +45,17 @@ export function OptionSheet({
     if (!open) return;
     const onKey = (e: KeyboardEvent) => e.key === "Escape" && onClose();
     document.addEventListener("keydown", onKey);
+    const root = document.documentElement;
+    const prevHtml = root.style.overflow;
+    const prevBody = document.body.style.overflow;
+    root.style.overflow = "hidden";
     document.body.style.overflow = "hidden";
+    setOverlayOpen(true);
     return () => {
       document.removeEventListener("keydown", onKey);
-      document.body.style.overflow = "";
+      root.style.overflow = prevHtml;
+      document.body.style.overflow = prevBody;
+      setOverlayOpen(false);
     };
   }, [open, onClose]);
 
@@ -83,19 +91,19 @@ export function OptionSheet({
   }
 
   return (
-    <div className="fixed inset-0 z-[60] flex items-end justify-center sm:items-center">
+    <div className="fixed inset-0 z-[80] flex items-end justify-center sm:items-center">
       <button
         type="button"
         aria-label={t("chooseOptions")}
         onClick={onClose}
-        className="absolute inset-0 bg-ink/40 backdrop-blur-[2px]"
+        className="absolute inset-0 bg-ink/40"
       />
 
       <div
         role="dialog"
         aria-modal="true"
         aria-label={pick(locale, item.nameEn, item.nameNe)}
-        className="relative flex max-h-[85dvh] w-full max-w-lg flex-col rounded-t-3xl bg-paper shadow-lifted sm:rounded-3xl"
+        className="relative z-10 flex max-h-[min(85dvh,100%)] w-full max-w-lg flex-col rounded-t-3xl bg-paper shadow-lifted sm:rounded-3xl"
       >
         <div className="flex items-start gap-3 border-b border-line p-5">
           <div className="min-w-0">
@@ -145,7 +153,7 @@ export function OptionSheet({
           ))}
         </div>
 
-        <div className="flex items-center gap-3 border-t border-line p-4 pb-[max(1rem,env(safe-area-inset-bottom))]">
+        <div className="flex touch-manipulation items-center gap-3 border-t border-line p-4 pb-[max(1rem,env(safe-area-inset-bottom))]">
           <div className="flex h-12 items-center rounded-xl border border-line">
             <button
               type="button"
@@ -169,8 +177,9 @@ export function OptionSheet({
           </div>
 
           <Button
+            type="button"
             size="lg"
-            className="flex-1"
+            className="flex-1 touch-manipulation"
             disabled={Boolean(unmetGroup)}
             onClick={() => {
               add(

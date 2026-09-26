@@ -13,7 +13,7 @@ import { createTrackSession } from "@/lib/track/session";
 import { publishOrders } from "@/server/cache";
 import { optional, text } from "@/server/form";
 import { getCheckoutCities } from "@/server/queries/checkout";
-import { getStoreSettings } from "@/server/queries/settings";
+import { getStoreSettings, isKitchenOpen } from "@/server/queries/settings";
 import type { Locale } from "@/i18n/routing";
 
 export type CheckoutState = { error?: string };
@@ -78,7 +78,7 @@ export async function placeOrder(
   }
 
   const settings = await getStoreSettings();
-  if (!settings.isAcceptingOrders) {
+  if (!settings.isAcceptingOrders || !isKitchenOpen(settings.openHours)) {
     return { error: "The kitchen is closed right now." };
   }
 
